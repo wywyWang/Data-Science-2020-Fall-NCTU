@@ -1,6 +1,8 @@
 import sys
 import os
 import time
+from tqdm import tqdm
+import threading
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -17,6 +19,8 @@ SLEEP_INTERVAL = 0.02
 YEAR = '2019'
 START = 2748    # start page is 2748
 END = 3143      # end page is 3143
+THREAD = 6
+STEP = (END - START + 1) // THREAD
 
 NEED_TO_CHECK_POST = ['https://www.ptt.cc/bbs/Beauty/M.1577354483.A.D9D.html?fbclid=IwAR0h3_kb3-pSiYHIowmiTneSmpElFzor0HNgY3IoKTVTOtERzuYM2KunoSo', 'https://www.ptt.cc/bbs/Beauty/M.1578210772.A.06E.html']
 
@@ -83,20 +87,13 @@ def get_each_page(page_index):
     popular_file.close()
 
 
-def crawl_PTT():
-    if os.path.exists(all_articles):
-        os.remove(all_articles)
-    if os.path.exists(all_popular):
-        os.remove(all_popular)
-
-    record_count = 0
-    for page in range(START, END+1):
-        if record_count % 50 == 0:
-            print("STATUS: {}, PAGE: {}".format(record_count, page))
+def crawl_PTT(thread_num):
+    # 396/6 = 66, 2748 ~ 2814
+    start = START + STEP * thread_num
+    end = start + STEP
+    print(start, end - 1)
+    for page in tqdm(range(start, end), desc='Thread: {}, {} ~ {}'.format(thread_num, start, end)):
         get_each_page(page)
-        record_count += 1
-        # if record_count == 21:
-        #     break
 
 if __name__ == '__main__':
     #get parameters
@@ -105,8 +102,21 @@ if __name__ == '__main__':
     
     # function crawl
     if functions == 'crawl':
-        crawl_PTT()
-        # print("DONEEEEEE")
+        # delete file if it exists
+        if os.path.exists(all_articles):
+            os.remove(all_articles)
+        if os.path.exists(all_popular):
+            os.remove(all_popular)
+
+        # create multi-threads
+        thread_list = []
+        for thread_num in range(THREAD):
+            thread_list.append(threading.Thread(target=crawl_PTT, args=(thread_num, )))
+            thread_list[thread_num].start()
+        for thread_num in range(THREAD):
+            thread_list[thread_num].join()
+        # crawl_PTT()
+        print("DONEEEEEE")
     # function push
     
     # function popular
