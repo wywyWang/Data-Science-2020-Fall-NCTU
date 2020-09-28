@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import csv
 from tqdm import tqdm
 import threading
 import requests
@@ -13,14 +14,16 @@ headers = {'cookie': 'over18=1;', 'user-agent': 'Mozilla/5.0 (X11; Linux x86_64)
 # crawler output filename
 all_articles = './all_articles.txt'
 all_popular = './all_popular.txt'
+raw_articles = './raw_articles.txt'
 
 # parameters
-SLEEP_INTERVAL = 0.02
+SLEEP_INTERVAL = 0.1
 YEAR = '2019'
 START = 2748    # start page is 2748
 END = 3143      # end page is 3143
 THREAD = 6
 STEP = (END - START + 1) // THREAD
+SEP = '#,#'
 
 NEED_TO_CHECK_POST = ['https://www.ptt.cc/bbs/Beauty/M.1577354483.A.D9D.html?fbclid=IwAR0h3_kb3-pSiYHIowmiTneSmpElFzor0HNgY3IoKTVTOtERzuYM2KunoSo', 'https://www.ptt.cc/bbs/Beauty/M.1578210772.A.06E.html']
 
@@ -48,7 +51,7 @@ def get_post_year(post_url, page_index):
 
 def get_each_page(page_index):
     time.sleep(SLEEP_INTERVAL)
-    cheat_page = '/bbs/Beauty/index'+ str(page_index) +'.html'
+    cheat_page = '/bbs/Beauty/index' + str(page_index) + '.html'
     page_url = header_URL + cheat_page
     response = requests.get(page_url, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -79,8 +82,8 @@ def get_each_page(page_index):
                     post_count = None
                 # get popular post info
                 if post_count == '爆':
-                    popular_file.write(post_date_convert + ',' + post_title + ',' + post_link + '\n')
-                articles_file.write(post_date_convert + ',' + post_title + ',' + post_link + '\n')
+                    popular_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
+                articles_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
             else:
                 pass
     articles_file.close()
@@ -91,13 +94,12 @@ def crawl_PTT(thread_num):
     # 396/6 = 66, 2748 ~ 2814
     start = START + STEP * thread_num
     end = start + STEP
-    print(start, end - 1)
+    # print(start, end - 1)
     for page in tqdm(range(start, end), desc='Thread: {}, {} ~ {}'.format(thread_num, start, end)):
         get_each_page(page)
 
 if __name__ == '__main__':
     #get parameters
-    # print(sys.argv)
     functions = sys.argv[1]
     
     # function crawl
@@ -115,10 +117,30 @@ if __name__ == '__main__':
             thread_list[thread_num].start()
         for thread_num in range(THREAD):
             thread_list[thread_num].join()
-        # crawl_PTT()
-        print("DONEEEEEE")
+        
+        # sort by date and time of two files and rewrite in order
+        df_articles = pd.read_csv(all_articles, sep=SEP, header=None, engine='python')
+        df_articles.columns = ['date', 'page', 'idx', 'title', 'url']
+        df_articles = df_articles.sort_values(by=['date', 'page', 'idx'], ascending=[True, True, True])
+        articles_file = open(all_articles, 'w+')
+        
+        for content in df_articles[['date', 'title', 'url']].values:
+            articles_file.write(str(content[0]) + ',' + content[1] + ',' + content[2] + '\n')
+        articles_file.close()
+        
+        df_popular = pd.read_csv(all_popular, sep=SEP, header=None, engine='python')
+        df_popular.columns = ['date', 'page', 'idx', 'title', 'url']
+        df_popular = df_popular.sort_values(by=['date', 'page', 'idx'], ascending=[True, True, True])
+        popular_file = open(all_popular, 'w+')
+        
+        for content in df_popular[['date', 'title', 'url']].values:
+            popular_file.write(str(content[0]) + ',' + content[1] + ',' + content[2] + '\n')
+        popular_file.close()
     # function push
-    
+    if functions == 'push':
+        assert len(sys.argv) == 4
+        print()
+
     # function popular
     
     # function keyword
