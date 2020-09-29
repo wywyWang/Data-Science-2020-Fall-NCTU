@@ -25,7 +25,7 @@ THREAD = 6
 STEP = (END - START + 1) // THREAD
 SEP = '#,#'
 
-NEED_TO_CHECK_POST = ['https://www.ptt.cc/bbs/Beauty/M.1577354483.A.D9D.html?fbclid=IwAR0h3_kb3-pSiYHIowmiTneSmpElFzor0HNgY3IoKTVTOtERzuYM2KunoSo', 'https://www.ptt.cc/bbs/Beauty/M.1578210772.A.06E.html']
+NEED_TO_CHECK_POST = ['https://www.ptt.cc/bbs/Beauty/M.1549974705.A.611.html', 'https://www.ptt.cc/bbs/Beauty/M.1577354483.A.D9D.html?fbclid=IwAR0h3_kb3-pSiYHIowmiTneSmpElFzor0HNgY3IoKTVTOtERzuYM2KunoSo', 'https://www.ptt.cc/bbs/Beauty/M.1578210772.A.06E.html']
 
 
 def get_post_year(post_url, page_index):
@@ -37,16 +37,16 @@ def get_post_year(post_url, page_index):
         main_content = content_soup.select("#main-content")[0].get_text("|")
     else:
         return None
-    if "※ 發信站" in main_content:
-        if page_index == START or page_index == END:
-            # ['Fri', 'Sep', '25', '10:10:33', '2020']
-            time_index = main_content.split("|").index("時間")
-            content_time = main_content.split("|")[time_index + 1].split(" ")
-            return content_time[-1]
-        else:
-            return YEAR
+    # if "※ 發信站" in main_content:
+    if page_index == START or page_index == END:
+        # ['Fri', 'Sep', '25', '10:10:33', '2020']
+        time_index = main_content.split("|").index("時間")
+        content_time = main_content.split("|")[time_index + 1].split(" ")
+        return content_time[-1]
     else:
-        return None
+        return YEAR
+    # else:
+    #     return None
 
 
 def get_each_page(page_index):
