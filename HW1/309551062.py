@@ -73,8 +73,33 @@ def get_each_page(page_index):
             post_month, post_day = post_date[idx].text.strip().split('/')
             post_date_convert = post_month + post_day
 
-            post_year = get_post_year(post_link, page_index)
-            if post_year == YEAR:
+            if page_index == START:
+                if post_date_convert == '101':
+                    # check have popular count
+                    if post_popular[idx].find("span") != None:
+                        post_count = post_popular[idx].find("span").text
+                    else:
+                        post_count = None
+                    # get popular post info
+                    if post_count == '爆':
+                        popular_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
+                    articles_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')                    
+                else:
+                    pass
+            elif page_index == END:
+                if post_date_convert == '1231':
+                    # check have popular count
+                    if post_popular[idx].find("span") != None:
+                        post_count = post_popular[idx].find("span").text
+                    else:
+                        post_count = None
+                    # get popular post info
+                    if post_count == '爆':
+                        popular_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
+                    articles_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')                    
+                else:
+                    pass
+            else:
                 # check have popular count
                 if post_popular[idx].find("span") != None:
                     post_count = post_popular[idx].find("span").text
@@ -84,8 +109,6 @@ def get_each_page(page_index):
                 if post_count == '爆':
                     popular_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
                 articles_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')
-            else:
-                pass
     articles_file.close()
     popular_file.close()
 
