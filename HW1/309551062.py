@@ -2,10 +2,11 @@ import sys
 import os
 import time
 import csv
-from tqdm import tqdm
 import threading
 import requests
 import pandas as pd
+from tqdm import tqdm
+from collections import Counter
 from bs4 import BeautifulSoup
 
 header_URL = 'https://www.ptt.cc'
@@ -47,6 +48,22 @@ def get_post_year(post_url, page_index):
         return YEAR
     # else:
     #     return None
+
+
+def get_article_push_count(article_link, push_count, boo_count):
+    time.sleep(SLEEP_INTERVAL)
+    content_response = requests.get(article_link, headers=headers)
+    content_soup = BeautifulSoup(content_response.text, "html.parser")
+    push_type = content_soup.find_all('span', {'class': 'push-tag'})
+    push_user = content_soup.find_all('span', {'class': 'push-userid'})
+    for each_type, each_user in zip(push_type, push_user):
+        if each_type.text == '推 ':
+            push_count.update([each_user.text])
+        elif each_type.text == '噓 ':
+            boo_count.update([each_user.text])
+        else:
+            pass
+    return push_count, boo_count
 
 
 def get_each_page(page_index):
@@ -121,6 +138,41 @@ def crawl_PTT(thread_num):
     for page in tqdm(range(start, end), desc='Thread: {}, {} ~ {}'.format(thread_num, start, end)):
         get_each_page(page)
 
+
+def push(start_date, end_date):
+    articles_file = open(all_articles, 'r')
+    article_info = articles_file.readlines()
+    article_match_link = []
+
+    # get link between start and end date
+    for article in article_info:
+        article_date = int(article.split(',')[0])
+        if article_date >= start_date and article_date <= end_date:
+            article_link = article.split(',')[-1].replace('\n', '')
+            article_match_link.append(article_link)
+    
+    push_count = Counter()
+    boo_count = Counter()
+    for article_link in tqdm(article_match_link, desc='Progress'):
+        push_count, boo_count = get_article_push_count(article_link, push_count, boo_count)
+
+    # wrtie into txt
+    filename = './push[' + str(start_date) + '-' + str(end_date) + '].txt'
+    push_file = open(filename, 'w')
+    push_file.write('all like: {}'.format(sum(push_count.values())) + '\n')
+    push_file.write('all boo: {}'.format(sum(boo_count.values())) + '\n')
+    # write push and boo ranks
+    rank = 1
+    for userid, freq in push_count.most_common(10):
+        push_file.write('like #{}: {} {}'.format(rank, userid, freq) + '\n')
+        rank += 1
+    rank = 1
+    for userid, freq in boo_count.most_common(10):
+        push_file.write('boo #{}: {} {}'.format(rank, userid, freq) + '\n')
+        rank += 1
+    push_file.close()
+
+
 if __name__ == '__main__':
     #get parameters
     functions = sys.argv[1]
@@ -162,7 +214,7 @@ if __name__ == '__main__':
     # function push
     if functions == 'push':
         assert len(sys.argv) == 4
-        print()
+        push(int(sys.argv[2]), int(sys.argv[3]))
 
     # function popular
     
