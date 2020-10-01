@@ -58,6 +58,8 @@ def get_article_push_count(article_link, push_count, boo_count):
     push_user = content_soup.find_all('span', {'class': 'push-userid'})
     for each_type, each_user in zip(push_type, push_user):
         if each_type.text == '推 ':
+            if each_user.text == 'cityhunter04':
+                print(article_link)
             push_count.update([each_user.text])
         elif each_type.text == '噓 ':
             boo_count.update([each_user.text])
@@ -156,6 +158,10 @@ def push(start_date, end_date):
     for article_link in tqdm(article_match_link, desc='Progress'):
         push_count, boo_count = get_article_push_count(article_link, push_count, boo_count)
 
+    # get top 10 and sort
+    top_10_push = sorted(push_count.items(), key=lambda pair: (-pair[1], pair[0]))[:10]
+    top_10_boo = sorted(boo_count.items(), key=lambda pair: (-pair[1], pair[0]))[:10]
+
     # wrtie into txt
     filename = './push[' + str(start_date) + '-' + str(end_date) + '].txt'
     push_file = open(filename, 'w')
@@ -163,11 +169,11 @@ def push(start_date, end_date):
     push_file.write('all boo: {}'.format(sum(boo_count.values())) + '\n')
     # write push and boo ranks
     rank = 1
-    for userid, freq in push_count.most_common(10):
+    for userid, freq in top_10_push:
         push_file.write('like #{}: {} {}'.format(rank, userid, freq) + '\n')
         rank += 1
     rank = 1
-    for userid, freq in boo_count.most_common(10):
+    for userid, freq in top_10_boo:
         push_file.write('boo #{}: {} {}'.format(rank, userid, freq) + '\n')
         rank += 1
     push_file.close()
