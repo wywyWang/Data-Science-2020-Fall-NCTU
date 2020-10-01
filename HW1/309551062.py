@@ -209,12 +209,18 @@ def popular(start_date, end_date):
         time.sleep(SLEEP_INTERVAL)
         content_response = requests.get(article_link, headers=headers)
         content_soup = BeautifulSoup(content_response.text, "html.parser")
-        href_link = content_soup.find_all('a', href=True)
-        for each_link in href_link:
-            original_link = each_link['href']
-            for check_type in accepted_types:
-                if original_link.lower().endswith(check_type):
-                    popular_file.write(original_link + '\n')
+        
+        if content_soup.select("#main-content"):
+            main_content = content_soup.select("#main-content")[0].get_text("|")
+        else:
+            main_content = []
+        if "※ 發信站" in main_content:
+            href_link = content_soup.find_all('a', href=True)
+            for each_link in href_link:
+                original_link = each_link['href']
+                for check_type in accepted_types:
+                    if original_link.lower().endswith(check_type):
+                        popular_file.write(original_link + '\n')
 
     popular_file.close()
 
