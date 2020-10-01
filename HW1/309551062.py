@@ -56,15 +56,21 @@ def get_article_push_count(article_link, push_count, boo_count):
     content_soup = BeautifulSoup(content_response.text, "html.parser")
     push_type = content_soup.find_all('span', {'class': 'push-tag'})
     push_user = content_soup.find_all('span', {'class': 'push-userid'})
-    for each_type, each_user in zip(push_type, push_user):
-        if each_type.text == '推 ':
-            if each_user.text == 'cityhunter04':
-                print(article_link)
-            push_count.update([each_user.text])
-        elif each_type.text == '噓 ':
-            boo_count.update([each_user.text])
-        else:
-            pass
+
+    if content_soup.select("#main-content"):
+        main_content = content_soup.select("#main-content")[0].get_text("|")
+    else:
+        main_content = []
+    if "※ 發信站" in main_content:
+        for each_type, each_user in zip(push_type, push_user):
+            if each_type.text == '推 ':
+                push_count.update([each_user.text])
+            elif each_type.text == '噓 ':
+                boo_count.update([each_user.text])
+            else:
+                pass
+    else:
+        return push_count, boo_count
     return push_count, boo_count
 
 
@@ -179,6 +185,40 @@ def push(start_date, end_date):
     push_file.close()
 
 
+def popular(start_date, end_date):
+    popular_file = open(all_popular, 'r')
+    popular_info = popular_file.readlines()
+    popular_match_link = []
+    popular_count = 0
+    accepted_types = ['jpg', 'jpeg', 'png', 'gif']
+
+    # get link between start and end date
+    for article in popular_info:
+        article_date = int(article.split(',')[0])
+        if article_date >= start_date and article_date <= end_date:
+            article_link = article.split(',')[-1].replace('\n', '')
+            popular_match_link.append(article_link)
+            popular_count += 1
+
+    # wrtie into txt
+    filename = './popular[' + str(start_date) + '-' + str(end_date) + '].txt'
+    popular_file = open(filename, 'w')
+    popular_file.write('number of popular articles: {}'.format(popular_count) + '\n')
+
+    for article_link in tqdm(popular_match_link, desc='Progress'):
+        time.sleep(SLEEP_INTERVAL)
+        content_response = requests.get(article_link, headers=headers)
+        content_soup = BeautifulSoup(content_response.text, "html.parser")
+        href_link = content_soup.find_all('a', href=True)
+        for each_link in href_link:
+            original_link = each_link['href']
+            for check_type in accepted_types:
+                if original_link.lower().endswith(check_type):
+                    popular_file.write(original_link + '\n')
+
+    popular_file.close()
+
+
 if __name__ == '__main__':
     #get parameters
     functions = sys.argv[1]
@@ -221,7 +261,8 @@ if __name__ == '__main__':
     if functions == 'push':
         assert len(sys.argv) == 4
         push(int(sys.argv[2]), int(sys.argv[3]))
-
     # function popular
-    
+    if functions == 'popular':
+        assert len(sys.argv) == 4
+        popular(int(sys.argv[2]), int(sys.argv[3]))    
     # function keyword
