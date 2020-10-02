@@ -217,7 +217,7 @@ def popular(start_date, end_date):
         if "※ 發信站" in main_content:
             href_link = content_soup.find_all('a', href=True)
             for each_link in href_link:
-                original_link = each_link['href']
+                original_link = each_link.text
                 for check_type in accepted_types:
                     if original_link.lower().endswith(check_type):
                         popular_file.write(original_link + '\n')
