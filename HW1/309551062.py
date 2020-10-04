@@ -225,6 +225,46 @@ def popular(start_date, end_date):
     popular_file.close()
 
 
+def keyword(keyword, start_date, end_date):
+    articles_file = open(all_articles, 'r')
+    article_info = articles_file.readlines()
+    article_match_link = []
+    accepted_types = ['jpg', 'jpeg', 'png', 'gif']
+
+    # get link between start and end date
+    for article in article_info:
+        article_date = int(article.split(',')[0])
+        if article_date >= start_date and article_date <= end_date:
+            article_link = article.split(',')[-1].replace('\n', '')
+            article_match_link.append(article_link)
+
+    # wrtie into txt
+    filename = './keyword(' + keyword + ')[' + str(start_date) + '-' + str(end_date) + '].txt'
+    keyword_file = open(filename, 'w')
+
+    for article_link in tqdm(article_match_link, desc='Progress'):
+        time.sleep(SLEEP_INTERVAL)
+        content_response = requests.get(article_link, headers=headers)
+        content_soup = BeautifulSoup(content_response.text, "html.parser")
+        
+        if content_soup.select("#main-content"):
+            main_content = content_soup.select("#main-content")[0].get_text()
+        else:
+            main_content = []
+        if "※ 發信站" in main_content:
+            test_content = main_content.split('※ 發信站')[0]
+            if '--' in test_content:
+                test_content = main_content.split('※ 發信站')[0].split('--')
+            test_keyword = any(keyword in every_string for every_string in test_content)
+            if test_keyword:
+                href_link = content_soup.find_all('a', href=True)
+                for each_link in href_link:
+                    original_link = each_link.text
+                    for check_type in accepted_types:
+                        if original_link.lower().endswith(check_type):
+                            keyword_file.write(original_link + '\n')
+
+
 if __name__ == '__main__':
     #get parameters
     functions = sys.argv[1]
@@ -272,3 +312,6 @@ if __name__ == '__main__':
         assert len(sys.argv) == 4
         popular(int(sys.argv[2]), int(sys.argv[3]))    
     # function keyword
+    if functions == 'keyword':
+        assert len(sys.argv) == 5
+        keyword(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))  
