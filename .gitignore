@@ -1,2 +1,3 @@
 *.txt
+crawling/*
 !requirements.txt
