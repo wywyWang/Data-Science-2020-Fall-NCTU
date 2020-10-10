@@ -254,7 +254,7 @@ def keyword(keyword, start_date, end_date):
         if "※ 發信站" in main_content:
             test_content = main_content.split('※ 發信站')[0]
             if '--' in test_content:
-                test_content = main_content.split('※ 發信站')[0].split('--')
+                test_content = main_content.split('※ 發信站')[0].split('--')[:-1]
             test_keyword = any(keyword in every_string for every_string in test_content)
             if test_keyword:
                 href_link = content_soup.find_all('a', href=True)
