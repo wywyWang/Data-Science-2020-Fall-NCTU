@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import csv
+import math
 import threading
 import requests
 import pandas as pd
@@ -98,8 +99,9 @@ def get_each_page(page_index):
             post_month, post_day = post_date[idx].text.strip().split('/')
             post_date_convert = post_month + post_day
 
-            if page_index == START:
-                if post_date_convert == '101':
+            check_interval = 50
+            if abs(START - page_index) <= check_interval:
+                if post_month != '12':
                     # check have popular count
                     if post_popular[idx].find("span") != None:
                         post_count = post_popular[idx].find("span").text
@@ -111,8 +113,8 @@ def get_each_page(page_index):
                     articles_file.write(post_date_convert + SEP + str(page_index) + SEP + str(idx) + SEP + post_title + SEP + post_link + '\n')                    
                 else:
                     pass
-            elif page_index == END:
-                if post_date_convert == '1231':
+            elif abs(END - page_index <= check_interval):
+                if post_month != '1':
                     # check have popular count
                     if post_popular[idx].find("span") != None:
                         post_count = post_popular[idx].find("span").text
