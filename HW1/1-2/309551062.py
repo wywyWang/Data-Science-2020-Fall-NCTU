@@ -32,7 +32,7 @@ if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load models
-    PATH = './model/efficientnet-b4_20201012-132329_0.001_7_0.4532584269662922'
+    PATH = './model/efficientnet-b4_20201012-204622_0.001_7_0.46570714013614456'
     new_net = utils.Net()
     new_net.load_state_dict(torch.load(PATH))
     new_net.to(device)
