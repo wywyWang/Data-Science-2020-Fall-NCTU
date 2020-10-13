@@ -62,11 +62,11 @@ class Net(nn.Module):
 
         self.relu0 = nn.ReLU()
 
-        # self.fc1 = nn.Linear(1000, 512)
+        # self.fc1 = nn.Linear(1000, 100)
         # self.relu1 = nn.ReLU()
         # self.drop1 = nn.Dropout(p=0.2)
 
-        # self.fc2 = nn.Linear(512, 2)
+        # self.fc2 = nn.Linear(100, 2)
 
         self.fc = nn.Linear(1000, 2)
 
