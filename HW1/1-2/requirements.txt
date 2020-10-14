@@ -45,7 +45,6 @@ nbformat==5.0.7
 nest-asyncio==1.4.1
 notebook==6.1.4
 numpy==1.19.2
-olefile==0.46
 packaging==20.4
 pandas==1.1.2
 pandocfilters==1.4.2
@@ -53,7 +52,7 @@ parso==0.7.0
 pbr==5.4.5
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow @ file:///tmp/build/80754af9/pillow_1594307298074/work
+Pillow==7.2.0
 prometheus-client==0.8.0
 prompt-toolkit==3.0.5
 ptyprocess==0.6.0
