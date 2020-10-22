@@ -1,3 +1,4 @@
 *.txt
 crawling/*
 !requirements.txt
+hw1_1_scripts/*
