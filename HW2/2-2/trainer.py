@@ -6,15 +6,16 @@ from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, save_name, log_steps, epochs, lr, timestr, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings):
+    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings):
         self.criterion = torch.nn.MSELoss()
         self.save_name = save_name
         self.log_steps = log_steps
         self.epochs = epochs
         self.lr = lr
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim).to(self.device)
         self.model.embedding.weight.data = pretrained_embeddings.cuda()
+        self.model.embedding.weight.requires_grad=False                 # freeze embedding
 
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
@@ -39,11 +40,15 @@ class AttractiveTrainer:
         
         avg_loss = 0.0
         for i, data in data_iter:
-            inputs = data[:, 0, :].to(self.device)
-            attractive_labels = data[:, 1, :].to(self.device)
+            inputs = data.Headline
+            attractive_labels = data.Label
 
             # forward masked_lm model
             attractive_prediction = self.model(inputs)
+
+            # print(attractive_prediction.shape)
+            # print(attractive_labels.shape)
+            # print(self.criterion(attractive_prediction, attractive_labels).item())
 
             # NLLLoss of predicting masked token
             loss = self.criterion(attractive_prediction, attractive_labels)
@@ -78,10 +83,13 @@ class AttractiveTrainer:
         
         avg_loss = 0.0
 
+        attractive_predict = torch.Tensor().to(self.device)
+        attractive_true = torch.Tensor().to(self.device)
+
         with torch.no_grad():
             for i, data in data_iter:
-                inputs = data[:, 0, :].to(self.device)
-                attractive_labels = data[:, 1, :].to(self.device)
+                inputs = data.Headline
+                attractive_labels = data.Label
 
                 # forward masked_lm model
                 attractive_prediction = self.model(inputs)
@@ -90,10 +98,16 @@ class AttractiveTrainer:
                 loss = self.criterion(attractive_prediction, attractive_labels)
 
                 avg_loss += loss.item()
-                
+
+                attractive_predict = torch.cat((attractive_predict, attractive_prediction[0]))
+                attractive_true = torch.cat((attractive_true, attractive_labels))
+
+
         avg_loss /= len(data_iter)
         print()
         print("EP_{} | avg_loss: {} |".format(str_code, avg_loss))
+
+        return attractive_predict.cpu().detach().tolist(), attractive_true.cpu().detach().tolist()
 
     def save(self, epoch):
         output_name = self.save_name + '.' + str(epoch)

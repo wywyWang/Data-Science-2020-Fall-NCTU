@@ -25,7 +25,7 @@ class AttractiveNet(nn.Module):
         #output = [sent len, batch size, hid dim]
         #hidden = [1, batch size, hid dim]
         
-        assert torch.equal(output[-1,:,:], hidden.squeeze(0))
+        # assert torch.equal(output[-1,:,:], hidden.squeeze(0))
         
         x = self.linear(hidden)
         return x
