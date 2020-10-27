@@ -6,14 +6,14 @@ from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings):
+    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers):
         self.criterion = torch.nn.MSELoss()
         self.save_name = save_name
         self.log_steps = log_steps
         self.epochs = epochs
         self.lr = lr
         self.device = device
-        self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim).to(self.device)
+        self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
         self.model.embedding.weight.data = pretrained_embeddings.cuda()
         self.model.embedding.weight.requires_grad=False                 # freeze embedding
 
