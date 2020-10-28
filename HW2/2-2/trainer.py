@@ -2,20 +2,22 @@ import torch.nn as nn
 import torch
 import tqdm
 import math
-from attractivenet import AttractiveNet
+# from attractivenet import AttractiveNet
+from transformermodel import TransformerModel
 
 class AttractiveTrainer:
 
-    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers):
+    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers, nhead):
         self.criterion = torch.nn.MSELoss()
         self.save_name = save_name
         self.log_steps = log_steps
         self.epochs = epochs
         self.lr = lr
         self.device = device
-        self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
-        self.model.embedding.weight.data = pretrained_embeddings.cuda()
-        self.model.embedding.weight.requires_grad=False                 # freeze embedding
+        # self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
+        self.model = TransformerModel(nhead, input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
+        self.model.embedding.token.weight.data = pretrained_embeddings.cuda()
+        self.model.embedding.token.weight.requires_grad = False                 # freeze embedding
 
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
@@ -46,9 +48,14 @@ class AttractiveTrainer:
             # forward masked_lm model
             attractive_prediction = self.model(inputs)
 
-            # print(attractive_prediction.shape)
+            # print(inputs)
+            # print(attractive_labels)
+            # print(attractive_prediction)
+            # print(inputs.shape)
             # print(attractive_labels.shape)
+            # print(attractive_prediction.shape)
             # print(self.criterion(attractive_prediction, attractive_labels).item())
+            # 1/0
 
             # NLLLoss of predicting masked token
             loss = self.criterion(attractive_prediction, attractive_labels)

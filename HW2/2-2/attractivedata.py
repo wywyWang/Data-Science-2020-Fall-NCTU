@@ -21,7 +21,7 @@ class AttractiveData:
         self.df_train = pd.read_csv(train_file)
         self.df_test = pd.read_csv(test_file)
 
-        self.TEXT = data.Field(sequential=True, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
+        self.TEXT = data.Field(sequential=True, init_token='<s>', tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         self.LABEL = data.LabelField(dtype=torch.float, sequential=False)
 
         self.train_data, self.test_data = data.TabularDataset.splits(
@@ -39,7 +39,6 @@ class AttractiveData:
         # self.padding_test = self.padding(self.df_test.Headline.to_list())
 
     def tokenizer(self, corpus):
-        corpus = corpus
         return [str(token) for token in self.nlp_model(corpus)]
 
     def padding(self, data_seq):
