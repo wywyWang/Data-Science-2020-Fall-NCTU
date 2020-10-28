@@ -16,8 +16,8 @@ class AttractiveTrainer:
         self.device = device
         # self.model = AttractiveNet(input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
         self.model = TransformerModel(nhead, input_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
-        self.model.embedding.token.weight.data = pretrained_embeddings.cuda()
-        self.model.embedding.token.weight.requires_grad = False                 # freeze embedding
+        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
+        # self.model.embedding.token.weight.requires_grad = False                 # freeze embedding
 
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
@@ -31,7 +31,7 @@ class AttractiveTrainer:
         for epoch in range(self.epochs):
             self.iteration(epoch)
             # self.scheduler.step()
-            self.save(epoch)
+            # self.save(epoch)
 
     def iteration(self, epoch):
         self.model.train()
