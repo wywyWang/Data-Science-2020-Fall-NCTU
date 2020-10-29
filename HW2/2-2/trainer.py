@@ -6,7 +6,7 @@ from transformermodel import TransformerModel
 
 class AttractiveTrainer:
 
-    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, test_loader, input_dim, category_dim, category_embedding_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers, nhead):
+    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, input_dim, category_dim, category_embedding_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers, nhead):
         self.criterion = torch.nn.MSELoss()
         self.save_name = save_name
         self.log_steps = log_steps
@@ -25,7 +25,6 @@ class AttractiveTrainer:
         # self.scheduler = torch.optim.ScheduledOptim(self.optimizer, self.model.hidden, n_warmup_steps=50)
         self.timestr = timestr
         self.train_loader = train_loader
-        self.test_loader = test_loader
 
     def train(self):
         for epoch in range(self.epochs):
