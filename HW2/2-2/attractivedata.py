@@ -8,18 +8,14 @@ import spacy
 
 class AttractiveData:
     def __init__(self, train_file, test_file, pretrained_file, max_size, min_freq, batch_size):
-        path = train_file.split('/')[0] + '/'
-        train_filename = train_file.split('/')[1]
-        test_filename = test_file.split('/')[1]
+        self.preprocess(train_file, test_file)
 
         self.max_size = max_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.nlp_model = spacy.load('en_core_web_lg')
-        self.df_train = pd.read_csv(train_file)
-        self.df_test = pd.read_csv(test_file)
-
-        # self.df_test[['ID', 'Headline', 'Category']].to_csv('./data/new_test.csv', index=False)
+        self.df_train = pd.read_csv('./data/new_train.csv')
+        self.df_test = pd.read_csv('./data/new_test.csv')
 
         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
@@ -32,7 +28,7 @@ class AttractiveData:
         # )
 
         self.train_data = data.TabularDataset(
-            path=train_file, format="csv", skip_header=True, 
+            path='./data/new_train.csv', format="csv", skip_header=True, 
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
         )
         self.test_data = data.TabularDataset(
@@ -48,3 +44,28 @@ class AttractiveData:
 
     def tokenizer(self, corpus):
         return [str(token) for token in self.nlp_model(corpus)]
+
+    def preprocess(self, train_file, test_file):
+        df_train = pd.read_csv(train_file)
+        df_test = pd.read_csv(test_file)
+
+        # process train categories
+        replace_train = {
+            'concussion': 'news',
+            'travelnews': 'travel',
+            'racing': 'formulaone',
+            'gardening': 'home'
+        }
+        df_train = df_train.replace({'Category': replace_train})
+
+        # process test categories
+        replace_test = {
+            'living': 'home',
+            'middleeast': 'news',
+            'us': 'news',
+            'racing': 'formulaone'
+        }
+        df_test = df_test.replace({'Category': replace_test})
+
+        df_train.to_csv('./data/new_train.csv', index=False)
+        df_test.to_csv('./data/new_test.csv', index=False)
