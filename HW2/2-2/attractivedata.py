@@ -18,9 +18,9 @@ class AttractiveData:
         self.df_test = pd.read_csv('./data/new_test.csv')
 
         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
-        self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
+        # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)
-        # self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
+        self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
         # self.CATEGORIES_LABEL = data.Field(sequential=False, use_vocab=False)
 
         # self.train_data, self.test_data = data.TabularDataset.splits(
@@ -37,7 +37,7 @@ class AttractiveData:
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', None)]
         )
 
-        self.TEXT.build_vocab(self.train_data, vectors=pretrained_file, min_freq=min_freq)
+        self.TEXT.build_vocab(self.train_data, self.test_data, vectors=pretrained_file, min_freq=min_freq)
         self.LABEL.build_vocab(self.train_data)
         self.CATEGORIES_LABEL.build_vocab(self.train_data)
 
@@ -50,14 +50,14 @@ class AttractiveData:
         df_train = pd.read_csv(train_file)
         df_test = pd.read_csv(test_file)
 
-        # # process train categories
-        # replace_train = {
-        #     'concussion': 'news',
-        #     'travelnews': 'travel',
-        #     'racing': 'formulaone',
-        #     'gardening': 'home'
-        # }
-        # df_train = df_train.replace({'Category': replace_train})
+        # process train categories
+        replace_train = {
+            'concussion': 'news',
+            'travelnews': 'travel',
+            'racing': 'formulaone',
+            'gardening': 'home'
+        }
+        df_train = df_train.replace({'Category': replace_train})
 
         # process test categories
         replace_test = {
