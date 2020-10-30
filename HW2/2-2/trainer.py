@@ -10,26 +10,31 @@ class AttractiveTrainer:
     def __init__(self, config, device, train_loader, pretrained_embeddings):
         self.config = config
         
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = torch.nn.MSELoss(reduction='mean')
         # self.criterion = torch.nn.CrossEntropyLoss()
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         # self.model = TransformerModel(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
-        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
-        self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
+        # total parameters
+        self.total_params = sum(p.numel() for p in self.model.parameters())
+        self.total_learned_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+
+        # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
+        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
+        #                                     {'params': self.model.linear.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1},
+        #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1}])
+
+        self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
                                             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
-                                            {'params': self.model.linear.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1},
-                                         {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1}])
-        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=0.95)
-        # self.scheduler = torch.optim.ScheduledOptim(self.optimizer, self.model.hidden, n_warmup_steps=50)
+                                         {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
+
         self.train_loader = train_loader
 
     def train(self):
-        for epoch in range(self.config['epochs']):
-            print("Epoch {}".format(epoch))
+        for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
+            # print("Epoch {}".format(epoch))
             self.train_predict, self.train_true = self.iteration(epoch)
             # self.scheduler.step()
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
@@ -88,10 +93,10 @@ class AttractiveTrainer:
 
     def evaluate(self, data_loader, str_code):
         self.model.eval()
-        data_iter = tqdm.tqdm(enumerate(data_loader),
-                            desc="EP: {} | lr: {}".format(str_code, self.config['lr']),
-                            total=len(data_loader),
-                            bar_format="{l_bar}{r_bar}")
+        # data_iter = tqdm.tqdm(enumerate(data_loader),
+        #                     desc="EP: {} | lr: {}".format(str_code, self.config['lr']),
+        #                     total=len(data_loader),
+        #                     bar_format="{l_bar}{r_bar}")
         
         avg_loss = 0.0
 
@@ -99,7 +104,7 @@ class AttractiveTrainer:
         attractive_true = torch.Tensor().to(self.device)
 
         with torch.no_grad():
-            for i, data in data_iter:
+            for i, data in enumerate(data_loader):
                 inputs = data.Headline
                 attractive_labels = data.Label
                 attractive_categories = data.Category
@@ -119,18 +124,18 @@ class AttractiveTrainer:
                 attractive_true = torch.cat((attractive_true, attractive_labels))
 
 
-        avg_loss /= len(data_iter)
+        avg_loss /= len(data_loader)
         print()
         print("EP_{} | avg_loss: {} |".format(str_code, avg_loss))
 
         return attractive_predict.cpu().detach().tolist(), attractive_true.cpu().detach().tolist(), avg_loss
 
     def save(self, prefix_name, timestr, epochs, loss):
-        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
+        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
         # store config parameters
-        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
+        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
 
         with open(config_name, 'w') as config_file:
             config_file.write(str(self.config))

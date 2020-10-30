@@ -18,16 +18,11 @@ class AttractiveData:
         self.df_test = pd.read_csv('./data/new_test.csv')
 
 #         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
-        self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
+        self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
         # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
         # self.CATEGORIES_LABEL = data.Field(sequential=False, use_vocab=False)
-
-        # self.train_data, self.test_data = data.TabularDataset.splits(
-        #     path=path, train=train_filename, test=test_filename, format="csv", skip_header=True, 
-        #     fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
-        # )
 
         self.train_data = data.TabularDataset(
             path='./data/new_train.csv', format="csv", skip_header=True, 

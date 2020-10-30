@@ -12,8 +12,11 @@ class AttractiveNet(nn.Module):
         
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
         self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
-        self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'])
-        self.linear = nn.Linear(config['hidden_dim']+config['category_embedding_dim'], config['output_dim'])
+        self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
+        # self.linear_lstm = nn.Linear(config['hidden_dim']+config['hidden_dim'], config['category_embedding_dim'])
+        # self.linear_output = nn.Linear(config['category_embedding_dim']+config['category_embedding_dim'], config['output_dim'])
+
+        self.linear_output = nn.Linear(config['hidden_dim']+config['hidden_dim']+config['category_embedding_dim'], config['output_dim'])
 
         self.init_weights()
 
@@ -29,6 +32,7 @@ class AttractiveNet(nn.Module):
         # self.cell = torch.zeros(self.config['num_layers'], self.config['batch_size'], self.config['hidden_dim'])
 
     def forward(self, x, category):
+        batch = x.shape[1]
         x = self.embedding(x)
         category_embedding = self.category_embedding(category)
 
@@ -36,14 +40,14 @@ class AttractiveNet(nn.Module):
 
         output, (self.hidden, self.cell) = self.encoder(x)
 
-        # print(output.shape, flush=True)
-        # print(category_embedding.shape, flush=True)
-        # print(self.hidden[-1].shape, flush=True)
-        # print(self.cell[-1].shape, flush=True)
-        # print(torch.cat((self.hidden[-1], category_embedding), dim=1), flush=True)
-        # 1/0
+        # print(self.hidden.shape)
 
-        x_category = torch.cat((self.hidden[-1], category_embedding), dim=1)
+        h_n = self.hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
 
-        prediction = self.linear(x_category)
+        # hidden_output = self.linear_lstm(h_n)
+        # x_category = torch.cat((hidden_output, category_embedding), dim=1)
+
+        x_category = torch.cat((h_n[0], h_n[1], category_embedding), dim=1)
+
+        prediction = self.linear_output(x_category)
         return prediction
