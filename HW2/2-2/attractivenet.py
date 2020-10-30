@@ -43,8 +43,9 @@ class AttractiveNet(nn.Module):
         # print(self.hidden.shape)
 
         h_n = self.hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
+        hidden_forward_backward = torch.cat((h_n[0], h_n[1]), dim=1)
 
-        # hidden_output = self.linear_lstm(h_n)
+        # hidden_output = self.linear_lstm(hidden_forward_backward)
         # x_category = torch.cat((hidden_output, category_embedding), dim=1)
 
         x_category = torch.cat((h_n[0], h_n[1], category_embedding), dim=1)
