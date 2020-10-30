@@ -17,6 +17,7 @@ class AttractiveData:
         self.df_train = pd.read_csv('./data/new_train.csv')
         self.df_test = pd.read_csv('./data/new_test.csv')
 
+#         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)

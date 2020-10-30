@@ -37,7 +37,8 @@ class AttractiveTrainer:
         # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
         self.optimizer = torch.optim.SGD([{'params': self.model.transformer_encoder.parameters(), 'lr': lr['transformer_encoder']}, 
                                             {'params': self.model.embedding.parameters(), 'lr': lr['embedding']},
-                                            {'params': self.model.linear.parameters(), 'lr': lr['linear']}])
+                                            {'params': self.model.linear.parameters(), 'lr': lr['linear'], 'weight_decay': 0.1},
+                                         {'params': self.model.category_embedding.parameters(), 'lr': lr['linear'], 'weight_decay': 0.1}])
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=0.95)
         # self.scheduler = torch.optim.ScheduledOptim(self.optimizer, self.model.hidden, n_warmup_steps=50)
         self.timestr = timestr
