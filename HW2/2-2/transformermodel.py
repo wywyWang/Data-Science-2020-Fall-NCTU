@@ -49,4 +49,5 @@ class TransformerModel(nn.Module):
         x_category = torch.cat((output[0, :], category_embedding), dim=1)
 
         prediction = self.linear(x_category)
+        
         return prediction

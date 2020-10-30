@@ -13,8 +13,8 @@ class AttractiveTrainer:
         self.criterion = torch.nn.MSELoss()
         # self.criterion = torch.nn.CrossEntropyLoss()
         self.device = device
-        # self.model = AttractiveNet(self.config).to(self.device)
-        self.model = TransformerModel(self.config).to(self.device)
+        self.model = AttractiveNet(self.config).to(self.device)
+        # self.model = TransformerModel(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
