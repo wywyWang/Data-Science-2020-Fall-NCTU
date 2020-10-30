@@ -3,53 +3,36 @@ import torch
 import tqdm
 import math
 from transformermodel import TransformerModel
+from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, save_name, log_steps, epochs, lr, timestr, device, train_loader, input_dim, category_dim, category_embedding_dim, embedding_dim, hidden_dim, output_dim, pretrained_embeddings, dropout, num_layers, nhead):
-        self.config = {
-            'log_steps': log_steps,
-            'epochs': epochs, 
-            'lr': lr,
-            'timestr': timestr, 
-            'input_dim': input_dim, 
-            'category_dim': category_dim, 
-            'category_embedding_dim': category_embedding_dim, 
-            'embedding_dim': embedding_dim, 
-            'hidden_dim': hidden_dim, 
-            'output_dim': output_dim, 
-            'dropout': dropout, 
-            'num_layers': num_layers, 
-            'nhead': nhead
-        }
+    def __init__(self, config, device, train_loader, pretrained_embeddings):
+        self.config = config
         
         self.criterion = torch.nn.MSELoss()
         # self.criterion = torch.nn.CrossEntropyLoss()
-        self.save_name = save_name
-        self.log_steps = log_steps
-        self.epochs = epochs
-        self.lr = lr
         self.device = device
-        self.model = TransformerModel(nhead, input_dim, category_dim, category_embedding_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers).to(self.device)
+        # self.model = AttractiveNet(self.config).to(self.device)
+        self.model = TransformerModel(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=0.01)
         # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
-        self.optimizer = torch.optim.SGD([{'params': self.model.transformer_encoder.parameters(), 'lr': lr['transformer_encoder']}, 
-                                            {'params': self.model.embedding.parameters(), 'lr': lr['embedding']},
-                                            {'params': self.model.linear.parameters(), 'lr': lr['linear'], 'weight_decay': 0.1},
-                                         {'params': self.model.category_embedding.parameters(), 'lr': lr['linear'], 'weight_decay': 0.1}])
+        self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
+                                            {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
+                                            {'params': self.model.linear.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1},
+                                         {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1}])
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=0.95)
         # self.scheduler = torch.optim.ScheduledOptim(self.optimizer, self.model.hidden, n_warmup_steps=50)
-        self.timestr = timestr
         self.train_loader = train_loader
 
     def train(self):
-        for epoch in range(self.epochs):
+        for epoch in range(self.config['epochs']):
             print("Epoch {}".format(epoch))
             self.train_predict, self.train_true = self.iteration(epoch)
             # self.scheduler.step()
-        self.save(self.timestr, self.epochs, self.train_loss)
+        self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
     def iteration(self, epoch):
         self.model.train()
@@ -95,8 +78,8 @@ class AttractiveTrainer:
                 "avg_loss": avg_loss / (i + 1)
             }
 
-            if i % self.log_steps == 0:
-                with open('log/{}_{}_train'.format(self.timestr, epoch), 'a') as f_train:
+            if i % self.config['log_steps'] == 0:
+                with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
                     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
@@ -106,7 +89,7 @@ class AttractiveTrainer:
     def evaluate(self, data_loader, str_code):
         self.model.eval()
         data_iter = tqdm.tqdm(enumerate(data_loader),
-                            desc="EP: {} | lr: {}".format(str_code, self.lr),
+                            desc="EP: {} | lr: {}".format(str_code, self.config['lr']),
                             total=len(data_loader),
                             bar_format="{l_bar}{r_bar}")
         
@@ -142,12 +125,12 @@ class AttractiveTrainer:
 
         return attractive_predict.cpu().detach().tolist(), attractive_true.cpu().detach().tolist(), avg_loss
 
-    def save(self, timestr, epochs, loss):
-        output_name = './model/' + self.save_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
+    def save(self, prefix_name, timestr, epochs, loss):
+        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
         # store config parameters
-        config_name = './config/' + self.save_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
+        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.3f}'.format(loss)) + '.' + str(epochs)
 
         with open(config_name, 'w') as config_file:
             config_file.write(str(self.config))

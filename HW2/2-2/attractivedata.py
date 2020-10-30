@@ -7,10 +7,10 @@ import spacy
 
 
 class AttractiveData:
-    def __init__(self, train_file, test_file, pretrained_file, max_size, min_freq, batch_size):
+    def __init__(self, train_file, test_file, pretrained_file, config):
+        self.config = config
         self.preprocess(train_file, test_file)
 
-        self.max_size = max_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.nlp_model = spacy.load('en_core_web_lg')
@@ -18,7 +18,7 @@ class AttractiveData:
         self.df_test = pd.read_csv('./data/new_test.csv')
 
 #         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
-        self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
+        self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
         # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
@@ -38,11 +38,11 @@ class AttractiveData:
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', None)]
         )
 
-        self.TEXT.build_vocab(self.train_data, self.test_data, vectors=pretrained_file, min_freq=min_freq)
+        self.TEXT.build_vocab(self.train_data, self.test_data, vectors=pretrained_file, min_freq=self.config['min_freq'])
         self.LABEL.build_vocab(self.train_data)
         self.CATEGORIES_LABEL.build_vocab(self.train_data)
 
-        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Text), batch_size=batch_size, device=self.device, train=True)
+        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Text), batch_size=self.config['batch_size'], device=self.device, train=True)
 
     def tokenizer(self, corpus):
         return [str(token) for token in self.nlp_model(corpus)]

@@ -6,17 +6,17 @@ from attractiveembedding import AttractiveEmbedding, CategoryEmbedding
 
 class TransformerModel(nn.Module):
 
-    def __init__(self, nhead, input_dim, category_dim, category_embedding_dim, embedding_dim, hidden_dim, output_dim, dropout, num_layers):
+    def __init__(self, config):
         super(TransformerModel, self).__init__()
         from torch.nn import TransformerEncoder, TransformerEncoderLayer
         self.model_type = 'Transformer'
         self.src_mask = None
-        self.embedding = AttractiveEmbedding(vocab_size=input_dim, embedding_size=embedding_dim)
-        self.category_embedding = CategoryEmbedding(vocab_size=category_dim, embed_size=category_embedding_dim)
-        encoder_layers = TransformerEncoderLayer(embedding_dim, nhead, hidden_dim, dropout, activation='relu')
-        self.transformer_encoder = TransformerEncoder(encoder_layers, num_layers)
-        self.embedding_dim = embedding_dim
-        self.linear = nn.Linear(embedding_dim+category_embedding_dim, output_dim)
+        self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
+        self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
+        encoder_layers = TransformerEncoderLayer(config['embedding_dim'], config['nhead'], config['hidden_dim'], config['dropout'], activation='relu')
+        self.encoder = TransformerEncoder(encoder_layers, config['num_layers'])
+        self.embedding_dim = config['embedding_dim']
+        self.linear = nn.Linear(config['embedding_dim']+config['category_embedding_dim'], config['output_dim'])
 
         # self.init_weights()
 
@@ -44,7 +44,7 @@ class TransformerModel(nn.Module):
         x = self.embedding(x)
         category_embedding = self.category_embedding(category)
 
-        output = self.transformer_encoder(x, src_key_padding_mask=src_key_padding_mask)
+        output = self.encoder(x, src_key_padding_mask=src_key_padding_mask)
 
         x_category = torch.cat((output[0, :], category_embedding), dim=1)
 
