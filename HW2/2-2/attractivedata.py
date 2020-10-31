@@ -37,7 +37,7 @@ class AttractiveData:
         self.LABEL.build_vocab(self.train_data)
         self.CATEGORIES_LABEL.build_vocab(self.train_data)
 
-        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Text), batch_size=self.config['batch_size'], device=self.device, train=True)
+        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Text), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
 
     def tokenizer(self, corpus):
         return [str(token) for token in self.nlp_model(corpus)]
@@ -47,7 +47,7 @@ class AttractiveData:
         df_test = pd.read_csv(test_file)
         
         # eliminate train mean
-        df_train.Label -= 3.2
+        df_train.Label -= 3.15
 
         # process train categories
         replace_train = {

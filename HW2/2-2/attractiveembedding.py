@@ -6,14 +6,15 @@ class AttractiveEmbedding(nn.Module):
     def __init__(self, vocab_size, embedding_size, dropout=0.1):
         super().__init__()
         self.token = TokenEmbedding(vocab_size=vocab_size, embed_size=embedding_size)
-        self.position = PositionalEmbedding(d_model=self.token.embedding_dim)
-        self.dropout = nn.Dropout(p=dropout)
+        # self.position = PositionalEmbedding(d_model=self.token.embedding_dim)
+        # self.dropout = nn.Dropout(p=dropout)
         self.embedding_size = embedding_size
 
     def forward(self, sequence):
-        x = self.token(sequence) + self.position(sequence)
-        # x = self.token(sequence)
-        return self.dropout(x)
+        # x = self.token(sequence) + self.position(sequence)
+        x = self.token(sequence)
+        return x
+        # return self.dropout(x)
 
 class PositionalEmbedding(nn.Module):
 

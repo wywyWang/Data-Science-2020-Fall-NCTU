@@ -2,7 +2,6 @@ import torch.nn as nn
 import torch
 import tqdm
 import math
-from transformermodel import TransformerModel
 from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
@@ -11,10 +10,8 @@ class AttractiveTrainer:
         self.config = config
         
         self.criterion = torch.nn.MSELoss(reduction='mean')
-        # self.criterion = torch.nn.CrossEntropyLoss()
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
-        # self.model = TransformerModel(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
         # total parameters
@@ -22,13 +19,13 @@ class AttractiveTrainer:
         self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
         # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
-        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
-        #                                     {'params': self.model.linear.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1},
-        #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear'], 'weight_decay': 0.1}])
+        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']}], lr=config['lr']['linear'])
 
-        self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
-                                            {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
-                                         {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
+        self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['encoder'])
+        # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
+        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
+        #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
 
         self.train_loader = train_loader
 
