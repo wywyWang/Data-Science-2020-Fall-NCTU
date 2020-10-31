@@ -15,6 +15,7 @@ class AttractiveNet(nn.Module):
 
         self.cnn = nn.Conv1d(in_channels=config['embedding_dim'], out_channels=config['hidden_dim'], kernel_size=config['kernel_size'])
         self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=config['dropout'])
         # self.maxpool = nn.MaxPool1d(kernel_size=config['max_size']-1+1)    # - kernel_size + 1
 
         self.encoder = nn.LSTM(input_size=config['hidden_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
@@ -45,7 +46,8 @@ class AttractiveNet(nn.Module):
         # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
         x = x.permute(1, 2, 0)
         x = self.cnn(x)
-        # x = self.relu(x)
+        x = self.relu(x)
+        x = self.dropout(x)
         # x = self.maxpool(x)       # look worse
         # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
         x = x.permute(2, 0, 1)

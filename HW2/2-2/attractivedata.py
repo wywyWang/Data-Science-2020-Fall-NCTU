@@ -46,8 +46,8 @@ class AttractiveData:
         df_train = pd.read_csv(train_file)
         df_test = pd.read_csv(test_file)
         
-        # # eliminate train mean
-        # df_train.Label -= 3.2
+        # eliminate train mean
+        df_train.Label -= 3.2
 
         # process train categories
         replace_train = {
