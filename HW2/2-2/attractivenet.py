@@ -12,9 +12,14 @@ class AttractiveNet(nn.Module):
         
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
         self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
-        self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
-        # self.linear_lstm = nn.Linear(config['hidden_dim']+config['hidden_dim'], config['category_embedding_dim'])
-        # self.linear_output = nn.Linear(config['category_embedding_dim']+config['category_embedding_dim'], config['output_dim'])
+
+        self.cnn = nn.Conv1d(in_channels=config['embedding_dim'], out_channels=config['hidden_dim'], kernel_size=config['kernel_size'])
+        self.relu = nn.ReLU()
+        # self.maxpool = nn.MaxPool1d(kernel_size=config['max_size']-1+1)    # - kernel_size + 1
+
+        self.encoder = nn.LSTM(input_size=config['hidden_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
+
+        # self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
 
         self.linear_output = nn.Linear(config['hidden_dim']+config['hidden_dim']+config['category_embedding_dim'], config['output_dim'])
 
@@ -36,6 +41,16 @@ class AttractiveNet(nn.Module):
         x = self.embedding(x)
         category_embedding = self.category_embedding(category)
 
+        # CNN
+        # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
+        x = x.permute(1, 2, 0)
+        x = self.cnn(x)
+        # x = self.relu(x)
+        # x = self.maxpool(x)       # look worse
+        # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
+        x = x.permute(2, 0, 1)
+
+
         # LSTM: (seq_length, batch_size, embedding_size)
 
         output, (self.hidden, self.cell) = self.encoder(x)
@@ -43,11 +58,6 @@ class AttractiveNet(nn.Module):
         # print(self.hidden.shape)
 
         h_n = self.hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
-        hidden_forward_backward = torch.cat((h_n[0], h_n[1]), dim=1)
-
-        # hidden_output = self.linear_lstm(hidden_forward_backward)
-        # x_category = torch.cat((hidden_output, category_embedding), dim=1)
-
         x_category = torch.cat((h_n[0], h_n[1], category_embedding), dim=1)
 
         prediction = self.linear_output(x_category)
