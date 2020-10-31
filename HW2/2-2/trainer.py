@@ -18,8 +18,8 @@ class AttractiveTrainer:
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
         # total parameters
-        self.total_params = sum(p.numel() for p in self.model.parameters())
-        self.total_learned_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
+        self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
         # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
