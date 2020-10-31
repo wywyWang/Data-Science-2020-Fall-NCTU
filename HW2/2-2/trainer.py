@@ -20,9 +20,8 @@ class AttractiveTrainer:
 
         # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']}], lr=config['lr']['linear'])
-
-        self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['encoder'])
+        self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
+        # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
@@ -80,9 +79,9 @@ class AttractiveTrainer:
                 "avg_loss": avg_loss / (i + 1)
             }
 
-            if i % self.config['log_steps'] == 0:
-                with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
-                    f_train.write(str(post_fix) + '\n')
+            # if i % self.config['log_steps'] == 0:
+            #     with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
+            #         f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
         attractive_predict, attractive_true, self.train_loss = self.evaluate(self.train_loader, 'train')
@@ -117,8 +116,8 @@ class AttractiveTrainer:
                 # _, predict_class = torch.max(attractive_prediction, dim=1)
                 # # print(predict_class)
 
-                attractive_predict = torch.cat((attractive_predict, attractive_prediction))
-                attractive_true = torch.cat((attractive_true, attractive_labels))
+                # attractive_predict = torch.cat((attractive_predict, attractive_prediction))
+                # attractive_true = torch.cat((attractive_true, attractive_labels))
 
 
         avg_loss /= len(data_loader)

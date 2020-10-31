@@ -2,8 +2,6 @@ import pandas as pd
 import torch
 import torchtext
 from torchtext import data
-import nltk
-import spacy
 
 
 class AttractiveData:
@@ -13,12 +11,12 @@ class AttractiveData:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.nlp_model = spacy.load('en_core_web_lg')
         self.df_train = pd.read_csv('./data/new_train.csv')
         self.df_test = pd.read_csv('./data/new_test.csv')
 
 #         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
-        self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
+        # self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
+        self.TEXT = data.Field(sequential=True, lower=True, pad_token='0')
         # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
@@ -39,15 +37,12 @@ class AttractiveData:
 
         self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Text), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
 
-    def tokenizer(self, corpus):
-        return [str(token) for token in self.nlp_model(corpus)]
-
     def preprocess(self, train_file, test_file):
         df_train = pd.read_csv(train_file)
         df_test = pd.read_csv(test_file)
         
-        # eliminate train mean
-        df_train.Label -= 3.15
+        # # eliminate train mean
+        # df_train.Label -= 3.15
 
         # process train categories
         replace_train = {
