@@ -9,7 +9,7 @@ class AttractiveTrainer:
     def __init__(self, config, device, train_loader, pretrained_embeddings):
         self.config = config
         
-        self.criterion = torch.nn.MSELoss(reduction='sum')
+        self.criterion = torch.nn.MSELoss(reduction='mean')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
@@ -20,7 +20,10 @@ class AttractiveTrainer:
 
         # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']}], lr=config['lr']['linear'])
-        self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
+        self.optimizer = torch.optim.SGD([
+            {'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']},
+            {'params': self.model.linear.parameters()},
+        ], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
@@ -71,7 +74,7 @@ class AttractiveTrainer:
             # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
             self.optimizer.step()
 
-            avg_loss += (loss.item() / attractive_prediction.shape[0])
+            avg_loss += loss.item()
 
             post_fix = {
                 "epoch": epoch,
