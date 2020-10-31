@@ -16,7 +16,7 @@ class AttractiveData:
 
 #         self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         # self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
-        self.TEXT = data.Field(sequential=True, lower=True, pad_token='0')
+        self.TEXT = data.Field(sequential=True, lower=True, fix_length=self.config['max_seq'], pad_token='0')
         # self.LABEL = data.LabelField(dtype=torch.long, sequential=False)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
@@ -41,8 +41,8 @@ class AttractiveData:
         df_train = pd.read_csv(train_file)
         df_test = pd.read_csv(test_file)
         
-        # # eliminate train mean
-        # df_train.Label -= 3.15
+        # eliminate train mean
+        df_train.Label -= 3.15
 
         # process train categories
         replace_train = {

@@ -9,7 +9,7 @@ class AttractiveTrainer:
     def __init__(self, config, device, train_loader, pretrained_embeddings):
         self.config = config
         
-        self.criterion = torch.nn.MSELoss(reduction='mean')
+        self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
@@ -71,7 +71,7 @@ class AttractiveTrainer:
             # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
             self.optimizer.step()
 
-            avg_loss += loss.item()
+            avg_loss += (loss.item() / attractive_prediction.shape[0])
 
             post_fix = {
                 "epoch": epoch,
