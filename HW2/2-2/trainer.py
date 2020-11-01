@@ -9,7 +9,7 @@ class AttractiveTrainer:
     def __init__(self, config, device, train_loader, pretrained_embeddings):
         self.config = config
         
-        self.criterion = torch.nn.MSELoss(reduction='mean')
+        self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
@@ -26,6 +26,7 @@ class AttractiveTrainer:
         #     # {'params': self.model.cnn1.parameters()},
         #     # {'params': self.model.cnn2.parameters()},
         # ], lr=config['lr']['linear'])
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['linear'])
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=config['lr']['linear'], momentum=0.9)
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
@@ -58,13 +59,7 @@ class AttractiveTrainer:
             #     f_train.write(str('==============') + '\n')
             attractive_prediction = self.model(inputs, attractive_categories, phase='train')
 
-            # print(attractive_prediction.shape, flush=True)
-            # print(attractive_labels.shape, flush=True)
-            # print(attractive_prediction[0:3], flush=True)
-            # print(attractive_labels[0:3], flush=True)
-            # 1/0
-
-            # NLLLoss of predicting masked token
+            # loss
             loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
 
             # backward and optimize in training stage
@@ -113,8 +108,8 @@ class AttractiveTrainer:
 
                 avg_loss += loss.item()
 
-        # avg_loss /= self.config['train_len']
-        avg_loss /= len(data_loader)
+        avg_loss /= self.config['train_len']
+        # avg_loss /= len(data_loader)
         print()
         print("EP_{} | avg_loss: {} |".format(str_code, avg_loss))
 

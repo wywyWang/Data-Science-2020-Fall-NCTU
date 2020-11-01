@@ -13,19 +13,24 @@ class AttractiveNet(nn.Module):
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
-        # self.cnn1 = nn.Sequential(
-        #     nn.Conv1d(in_channels=config['embedding_dim'], out_channels=220, kernel_size=config['kernel_size'], padding=1),
-        #     nn.ReLU()
-        # )
+        self.cnn1 = nn.Sequential(
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=220, kernel_size=config['kernel_size'], padding=1),
+            nn.ReLU()
+        )
 
-        # self.cnn2 = nn.Sequential(
-        #     nn.Conv1d(in_channels=220, out_channels=config['hidden_dim'], kernel_size=config['kernel_size'], padding=1),
-        #     nn.ReLU()
-        # )
+        self.cnn2 = nn.Sequential(
+            nn.Conv1d(in_channels=220, out_channels=150, kernel_size=config['kernel_size'], padding=1),
+            nn.ReLU()
+        )
 
-        # self.encoder = nn.LSTM(input_size=config['hidden_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
+        self.cnn3 = nn.Sequential(
+            nn.Conv1d(in_channels=150, out_channels=100, kernel_size=config['kernel_size'], padding=1),
+            nn.ReLU()
+        )
 
-        self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        self.encoder = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+
+        # self.encoder = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
         # self.linear_output = nn.Linear(config['hidden_dim']*4+config['category_embedding_dim'], config['output_dim'])
         # self.linear_output = nn.Linear(config['hidden_dim']*4, config['output_dim'])
@@ -53,19 +58,17 @@ class AttractiveNet(nn.Module):
         x = self.embedding(x)
         # category_embedding = self.category_embedding(category)
 
-        # # CNN
-        # # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
-        # # print(x.shape, flush=True)
-        # x = x.permute(1, 2, 0)
-        # # print(x.shape, flush=True)
-        # x = self.cnn1(x)
-        # # print(x.shape, flush=True)
-        # x = self.cnn2(x)
-        # # print(x.shape, flush=True)
-        # # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
-        # x = x.permute(2, 0, 1)
-        # # print(x.shape, flush=True)
-        # # 1/0
+        # CNN
+        # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
+        # print(x.shape, flush=True)
+        x = x.transpose(1, 2)
+        x = self.cnn1(x)
+        x = self.cnn2(x)
+        x = self.cnn3(x)
+        # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
+        x = x.transpose(1, 2)
+        # print(x.shape, flush=True)
+        # 1/0
 
         # LSTM: (seq_length, batch_size, embedding_size)
         # print(x.shape, flush=True)
