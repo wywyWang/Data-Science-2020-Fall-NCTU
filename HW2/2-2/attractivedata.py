@@ -22,7 +22,11 @@ class AttractiveData:
         self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
 
         self.train_data = data.TabularDataset(
-            path='./data/new_train.csv', format="csv", skip_header=True, 
+            path='./example/new_train.csv', format="csv", skip_header=True, 
+            fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
+        )
+        self.val_data = data.TabularDataset(
+            path='./example/new_val.csv', format="csv", skip_header=True, 
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
         )
         self.test_data = data.TabularDataset(
@@ -31,6 +35,7 @@ class AttractiveData:
         )
         self.train_len = len(self.train_data)
         self.test_len = len(self.test_data)
+        self.val_len = len(self.val_data)
 
         self.TEXT.build_vocab(self.train_data, self.test_data, vectors=pretrained_file, unk_init=torch.Tensor.normal_)
         self.LABEL.build_vocab(self.train_data)
@@ -39,6 +44,7 @@ class AttractiveData:
         self.pad_idx = self.TEXT.vocab.stoi[self.TEXT.pad_token]
 
         self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
+        self.valloader = data.BucketIterator(self.val_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=False)
 
     def preprocess(self, train_file, test_file):
         df_train = pd.read_csv(train_file)
@@ -63,7 +69,7 @@ class AttractiveData:
             'us': 'news',
             'racing': 'formulaone'
         }
-        df_test = df_test.replace({'Category': replace_test})
+        df_test = df_test.replace({'Category': replace_train})
 
-        df_train.to_csv('./data/new_train.csv', index=False)
-        df_test.to_csv('./data/new_test.csv', index=False)
+        df_train.to_csv('./example/new_train.csv', index=False)
+        df_test.to_csv('./example/new_val.csv', index=False)

@@ -80,12 +80,6 @@ class AttractiveNet(nn.Module):
         h, c = h.reshape(batch, -1), c.reshape(batch, -1)
         x_category = torch.cat((h, c), dim=1)
 
-        # h_n = hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
-        # c_n = cell.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
-        # x_category = torch.cat((h_n[0], c_n[0], h_n[1], c_n[1]), dim=1)
-        # x_category = torch.cat((h_n[0], c_n[0], h_n[1], c_n[1], category_embedding), dim=1)
-
-        # prediction = self.linear_output(x_category)
         prediction = self.linear(x_category)
 
         if phase == 'train':

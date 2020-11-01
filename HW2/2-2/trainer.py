@@ -6,15 +6,15 @@ from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, config, device, train_loader, pretrained_embeddings):
+    def __init__(self, config, device, train_loader, val_loader, pretrained_embeddings):
         self.config = config
         
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
-        self.model.embedding.token.weight.data[0] = torch.zeros(300)
-        self.model.embedding.token.weight.data[1] = torch.zeros(300)
+        # self.model.embedding.token.weight.data[0] = torch.zeros(300)
+        # self.model.embedding.token.weight.data[1] = torch.zeros(300)
 
         # total parameters
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
@@ -34,6 +34,7 @@ class AttractiveTrainer:
         #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
 
         self.train_loader = train_loader
+        self.val_loader = val_loader
 
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
@@ -81,17 +82,12 @@ class AttractiveTrainer:
                 #     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
-        self.train_loss = self.evaluate(self.train_loader, 'train')
+        self.train_loss = self.evaluate(self.train_loader, self.val_loader, 'train')
 
-    def evaluate(self, data_loader, str_code):
+    def evaluate(self, data_loader, val_data_loader, str_code):
         self.model.eval()
-        # data_iter = tqdm.tqdm(enumerate(data_loader),
-        #                     desc="EP: {} | lr: {}".format(str_code, self.config['lr']),
-        #                     total=len(data_loader),
-        #                     bar_format="{l_bar}{r_bar}")
-        
-        avg_loss = 0.0
-
+    
+        train_loss = 0.0
         with torch.no_grad():
             for i, data in enumerate(data_loader):
                 inputs = data.Headline
@@ -106,14 +102,33 @@ class AttractiveTrainer:
                 
                 # print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
 
-                avg_loss += loss.item()
+                train_loss += loss.item()
 
-        avg_loss /= self.config['train_len']
-        # avg_loss /= len(data_loader)
+        train_loss /= self.config['train_len']
+
+        val_loss = 0.0
+        with torch.no_grad():
+            for i, data in enumerate(val_data_loader):
+                inputs = data.Headline
+                attractive_labels = data.Label
+                attractive_categories = data.Category
+
+                # forward
+                attractive_prediction = self.model(inputs, attractive_categories, phase='train')
+
+                # MSELoss
+                loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
+                
+                # print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
+
+                val_loss += loss.item()
+
+        val_loss /= self.config['val_len']
+
         print()
-        print("EP_{} | avg_loss: {} |".format(str_code, avg_loss))
+        print("EP_{} | train loss: {} | val loss: {} |".format(str_code, train_loss, val_loss))
 
-        return avg_loss
+        return train_loss
 
     def save(self, prefix_name, timestr, epochs, loss):
         output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
