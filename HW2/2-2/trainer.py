@@ -20,12 +20,7 @@ class AttractiveTrainer:
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
         self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
-        # self.optimizer = torch.optim.SGD([
-        #     {'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']},
-        #     {'params': self.model.linear.parameters()},
-        #     # {'params': self.model.cnn1.parameters()},
-        #     # {'params': self.model.cnn2.parameters()},
-        # ], lr=config['lr']['linear'])
+
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['linear'])
         self.optimizer = torch.optim.SGD([
             {'params': self.model.encoder_bigram.parameters()}, 
@@ -46,7 +41,7 @@ class AttractiveTrainer:
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.iteration(epoch)
-            if epoch % 50 == 0 and epoch != 0:
+            if epoch % 10 == 0 and epoch != 0:
                 self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
@@ -80,7 +75,6 @@ class AttractiveTrainer:
             # backward and optimize in training stage
             self.optimizer.zero_grad()
             loss.backward()
-
             self.optimizer.step()
 
             avg_loss += loss.item()
@@ -141,6 +135,9 @@ class AttractiveTrainer:
 
         print()
         print("EP_{} | train loss: {} | val loss: {} |".format(str_code, train_loss, val_loss))
+
+        with open('log/{}'.format(self.config['timestr']), 'a') as f_train:
+            f_train.write(str(train_loss) + ', ' + str(val_loss) + '\n')
 
         return train_loss
 
