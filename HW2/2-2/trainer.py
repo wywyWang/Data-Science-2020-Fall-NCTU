@@ -13,17 +13,20 @@ class AttractiveTrainer:
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
+        self.model.embedding.token.weight.data[0] = torch.zeros(300)
+        self.model.embedding.token.weight.data[1] = torch.zeros(300)
 
         # total parameters
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
         self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
-        # self.optimizer = torch.optim.SGD([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
-        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']}], lr=config['lr']['linear'])
-        self.optimizer = torch.optim.SGD([
-            {'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']},
-            {'params': self.model.linear.parameters()},
-        ], lr=config['lr']['linear'])
+        # self.optimizer = torch.optim.SGD([
+        #     {'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']},
+        #     {'params': self.model.linear.parameters()},
+        #     # {'params': self.model.cnn1.parameters()},
+        #     # {'params': self.model.cnn2.parameters()},
+        # ], lr=config['lr']['linear'])
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=config['lr']['linear'], momentum=0.9)
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
@@ -33,62 +36,55 @@ class AttractiveTrainer:
 
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
-            # print("Epoch {}".format(epoch))
-            self.train_predict, self.train_true = self.iteration(epoch)
-            # self.scheduler.step()
-        self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
+            self.iteration(epoch)
+        self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], 0)
 
     def iteration(self, epoch):
         self.model.train()
-        # data_iter = tqdm.tqdm(enumerate(self.train_loader),
-        #                     desc="EP:{} | lr: {}".format(epoch, self.lr),
-        #                     total=len(self.train_loader),
-        #                     bar_format="{l_bar}{r_bar}")
         
         avg_loss = 0.0
+        print("====")
         for i, data in enumerate(self.train_loader):
             inputs = data.Headline
             attractive_labels = data.Label
             attractive_categories = data.Category
 
-            # forward masked_lm model
-            attractive_prediction = self.model(inputs, attractive_categories)
-
-            # print(inputs, flush=True)
-            # print(attractive_labels, flush=True)
-            # print(attractive_prediction, flush=True)
-            # # print(attractive_categories, flush=True)
-            # print(inputs.shape, flush=True)
-            # print(attractive_labels.shape, flush=True)
-            # print(attractive_prediction.shape, flush=True)
-            # print(attractive_categories.shape, flush=True)
-            # print(self.criterion(attractive_prediction, attractive_labels).item(), flush=True)
-            # 1/0
+            # forward
+            # with open('debug', 'a') as f_train:
+            #     # f_train.write(str(inputs) + '\n')
+            #     # f_train.write(str(attractive_labels) + '\n')
+            #     for parameters in self.model.linear[2].parameters():
+            #         f_train.write(str(parameters) + '\n')
+            #     f_train.write(str('==============') + '\n')
+            attractive_prediction = self.model(inputs, attractive_categories, phase='train')
 
             # NLLLoss of predicting masked token
-            loss = self.criterion(attractive_prediction, attractive_labels)
+            loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
 
             # backward and optimize in training stage
             self.optimizer.zero_grad()
             loss.backward()
+
             # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
             self.optimizer.step()
+
+            # for parameters in self.model.linear.parameters():
+            #     print(parameters)
 
             avg_loss += loss.item()
 
             post_fix = {
                 "epoch": epoch,
                 "iter": i,
-                "avg_loss": avg_loss / (i + 1)
+                "avg_loss": avg_loss / (i + 1) / self.config['batch_size']
             }
 
             # if i % self.config['log_steps'] == 0:
-            #     with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
-            #         f_train.write(str(post_fix) + '\n')
+                # with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
+                #     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
-        attractive_predict, attractive_true, self.train_loss = self.evaluate(self.train_loader, 'train')
-        return attractive_predict, attractive_true
+        # self.train_loss = self.evaluate(self.train_loader, 'train')
 
     def evaluate(self, data_loader, str_code):
         self.model.eval()
@@ -99,35 +95,28 @@ class AttractiveTrainer:
         
         avg_loss = 0.0
 
-        attractive_predict = torch.Tensor().to(self.device)
-        attractive_true = torch.Tensor().to(self.device)
-
         with torch.no_grad():
             for i, data in enumerate(data_loader):
                 inputs = data.Headline
                 attractive_labels = data.Label
                 attractive_categories = data.Category
 
-                # forward masked_lm model
-                attractive_prediction = self.model(inputs, attractive_categories)
+                # forward
+                attractive_prediction = self.model(inputs, attractive_categories, phase='train')
 
                 # MSELoss
-                loss = self.criterion(attractive_prediction, attractive_labels)
+                loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
+                
+                print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
 
                 avg_loss += loss.item()
 
-                # _, predict_class = torch.max(attractive_prediction, dim=1)
-                # # print(predict_class)
-
-                # attractive_predict = torch.cat((attractive_predict, attractive_prediction))
-                # attractive_true = torch.cat((attractive_true, attractive_labels))
-
-
+        # avg_loss /= self.config['train_len']
         avg_loss /= len(data_loader)
         print()
         print("EP_{} | avg_loss: {} |".format(str_code, avg_loss))
 
-        return attractive_predict.cpu().detach().tolist(), attractive_true.cpu().detach().tolist(), avg_loss
+        return avg_loss
 
     def save(self, prefix_name, timestr, epochs, loss):
         output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)

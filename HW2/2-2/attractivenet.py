@@ -13,15 +13,15 @@ class AttractiveNet(nn.Module):
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
-        # self.cnn1 = nn.Sequential(
-        #     nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size']),
-        #     nn.ReLU()
-        # )
+        self.cnn1 = nn.Sequential(
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size']),
+            nn.ReLU()
+        )
 
-        # self.cnn2 = nn.Sequential(
-        #     nn.Conv1d(in_channels=200, out_channels=config['hidden_dim'], kernel_size=config['kernel_size']),
-        #     nn.ReLU()
-        # )
+        self.cnn2 = nn.Sequential(
+            nn.Conv1d(in_channels=200, out_channels=config['hidden_dim'], kernel_size=config['kernel_size']),
+            nn.ReLU()
+        )
 
         # self.encoder = nn.LSTM(input_size=config['hidden_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True)
 
@@ -35,7 +35,7 @@ class AttractiveNet(nn.Module):
             nn.ReLU(),
             nn.Linear(30, 1)
         )
-        self.init_weights()
+        # self.init_weights()
 
     def init_weights(self):
         for name, param in self.encoder.named_parameters():
@@ -48,7 +48,7 @@ class AttractiveNet(nn.Module):
         # self.hidden = torch.zeros(self.config['num_layers'], self.config['batch_size'], self.config['hidden_dim'])
         # self.cell = torch.zeros(self.config['num_layers'], self.config['batch_size'], self.config['hidden_dim'])
 
-    def forward(self, x, category):
+    def forward(self, x, category, phase):
         batch = x.shape[1]
         x = self.embedding(x)
         # category_embedding = self.category_embedding(category)
@@ -70,13 +70,19 @@ class AttractiveNet(nn.Module):
         # LSTM: (seq_length, batch_size, embedding_size)
         # print(x.shape, flush=True)
 
-        output, (self.hidden, self.cell) = self.encoder(x)
+        output, (hidden, cell) = self.encoder(x)
 
-        h_n = self.hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
-        c_n = self.cell.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
+        h_n = hidden.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
+        c_n = cell.view(self.config['num_layers'], 2, batch, self.config['hidden_dim'])[-1]
         x_category = torch.cat((h_n[0], c_n[0], h_n[1], c_n[1]), dim=1)
         # x_category = torch.cat((h_n[0], c_n[0], h_n[1], c_n[1], category_embedding), dim=1)
 
         # prediction = self.linear_output(x_category)
         prediction = self.linear(x_category)
+
+        if phase == 'train':
+            prediction += 3.15
+        else:
+            prediction += 2.8
+
         return prediction
