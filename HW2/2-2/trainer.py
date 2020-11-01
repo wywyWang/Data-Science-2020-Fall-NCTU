@@ -37,7 +37,7 @@ class AttractiveTrainer:
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.iteration(epoch)
-        self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], 0)
+        self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
     def iteration(self, epoch):
         self.model.train()
@@ -58,6 +58,12 @@ class AttractiveTrainer:
             #     f_train.write(str('==============') + '\n')
             attractive_prediction = self.model(inputs, attractive_categories, phase='train')
 
+            # print(attractive_prediction.shape, flush=True)
+            # print(attractive_labels.shape, flush=True)
+            # print(attractive_prediction[0:3], flush=True)
+            # print(attractive_labels[0:3], flush=True)
+            # 1/0
+
             # NLLLoss of predicting masked token
             loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
 
@@ -65,11 +71,7 @@ class AttractiveTrainer:
             self.optimizer.zero_grad()
             loss.backward()
 
-            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
             self.optimizer.step()
-
-            # for parameters in self.model.linear.parameters():
-            #     print(parameters)
 
             avg_loss += loss.item()
 
@@ -84,7 +86,7 @@ class AttractiveTrainer:
                 #     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
-        # self.train_loss = self.evaluate(self.train_loader, 'train')
+        self.train_loss = self.evaluate(self.train_loader, 'train')
 
     def evaluate(self, data_loader, str_code):
         self.model.eval()
@@ -107,7 +109,7 @@ class AttractiveTrainer:
                 # MSELoss
                 loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
                 
-                print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
+                # print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
 
                 avg_loss += loss.item()
 

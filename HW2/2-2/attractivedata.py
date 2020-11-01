@@ -16,10 +16,10 @@ class AttractiveData:
 
         # self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         # self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
-        self.TEXT = data.Field(sequential=True, lower=True)
-        self.CATEGORIES_LABEL = data.LabelField(sequential=False)
-        self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False)
-        self.ID = data.Field(sequential=False, use_vocab=False)
+        self.TEXT = data.Field(sequential=True, lower=True, batch_first=True)
+        self.CATEGORIES_LABEL = data.LabelField(sequential=False, batch_first=True)
+        self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False, batch_first=True)
+        self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
 
         self.train_data = data.TabularDataset(
             path='./data/new_train.csv', format="csv", skip_header=True, 
@@ -38,7 +38,7 @@ class AttractiveData:
         self.unk_idx = self.TEXT.vocab.stoi[self.TEXT.unk_token]
         self.pad_idx = self.TEXT.vocab.stoi[self.TEXT.pad_token]
 
-        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=False)
+        self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
 
     def preprocess(self, train_file, test_file):
         df_train = pd.read_csv(train_file)
