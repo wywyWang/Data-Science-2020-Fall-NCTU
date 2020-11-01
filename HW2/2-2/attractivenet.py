@@ -40,7 +40,7 @@ class AttractiveNet(nn.Module):
             nn.ReLU(),
             nn.Linear(30, 1)
         )
-        # self.init_weights()
+        self.init_weights()
 
     def init_weights(self):
         for name, param in self.encoder.named_parameters():
@@ -86,5 +86,4 @@ class AttractiveNet(nn.Module):
             prediction += 3.15
         else:
             prediction += 2.8
-
         return prediction

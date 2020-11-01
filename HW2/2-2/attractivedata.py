@@ -22,7 +22,7 @@ class AttractiveData:
         self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
 
         self.train_data = data.TabularDataset(
-            path='./example/new_train.csv', format="csv", skip_header=True, 
+            path='./data/new_train.csv', format="csv", skip_header=True, 
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
         )
         self.val_data = data.TabularDataset(
@@ -69,7 +69,7 @@ class AttractiveData:
             'us': 'news',
             'racing': 'formulaone'
         }
-        df_test = df_test.replace({'Category': replace_train})
+        df_test = df_test.replace({'Category': replace_test})
 
-        df_train.to_csv('./example/new_train.csv', index=False)
-        df_test.to_csv('./example/new_val.csv', index=False)
+        df_train.to_csv('./data/new_train.csv', index=False)
+        df_test.to_csv('./data/new_test.csv', index=False)

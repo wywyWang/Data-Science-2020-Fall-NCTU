@@ -60,6 +60,11 @@ class AttractiveTrainer:
             #     f_train.write(str('==============') + '\n')
             attractive_prediction = self.model(inputs, attractive_categories, phase='train')
 
+            # print(attractive_prediction.view(-1))
+            # print(attractive_labels)
+            # print(self.criterion(attractive_prediction.view(-1), attractive_labels))
+            # 1/0
+
             # loss
             loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
 
