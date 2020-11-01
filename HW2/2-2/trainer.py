@@ -27,7 +27,14 @@ class AttractiveTrainer:
         #     # {'params': self.model.cnn2.parameters()},
         # ], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['linear'])
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=config['lr']['linear'], momentum=0.9)
+        self.optimizer = torch.optim.SGD([
+            {'params': self.model.encoder_bigram.parameters()}, 
+            {'params': self.model.encoder_trigram.parameters()}, 
+            {'params': self.model.bigramcnn.parameters()}, 
+            {'params': self.model.trigramcnn.parameters()},
+            {'params': self.model.linear.parameters()}, 
+            {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
+        ], lr=config['lr']['linear'], momentum=0.9)
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
         # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
         #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
@@ -39,6 +46,8 @@ class AttractiveTrainer:
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.iteration(epoch)
+            if epoch % 50 == 0 and epoch != 0:
+                self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
     def iteration(self, epoch):

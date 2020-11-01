@@ -16,7 +16,7 @@ class AttractiveData:
 
         # self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         # self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
-        self.TEXT = data.Field(sequential=True, lower=True, batch_first=True)
+        self.TEXT = data.Field(sequential=True, lower=True, batch_first=True, fix_length=self.config['max_seq'])
         self.CATEGORIES_LABEL = data.LabelField(sequential=False, batch_first=True)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False, batch_first=True)
         self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
