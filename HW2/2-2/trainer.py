@@ -12,7 +12,7 @@ class AttractiveTrainer:
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
-        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
+        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=True)
         # self.model.embedding.token.weight.data[0] = torch.zeros(300)
         # self.model.embedding.token.weight.data[1] = torch.zeros(300)
 
@@ -20,9 +20,8 @@ class AttractiveTrainer:
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
         self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
-
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config['lr']['linear'])
         self.optimizer = torch.optim.SGD([
+            # {'params': self.model.encoder_origin.parameters()}, 
             {'params': self.model.encoder_bigram.parameters()}, 
             {'params': self.model.encoder_trigram.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
@@ -30,10 +29,6 @@ class AttractiveTrainer:
             {'params': self.model.linear.parameters()}, 
             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         ], lr=config['lr']['linear'], momentum=0.9)
-        # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}], lr=config['lr']['linear'])
-        # self.optimizer = torch.optim.Adam([{'params': self.model.encoder.parameters(), 'lr': config['lr']['encoder']}, 
-        #                                     {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
-        #                                  {'params': self.model.category_embedding.parameters(), 'lr': config['lr']['linear']}], lr=config['lr']['linear'])
 
         self.train_loader = train_loader
         self.val_loader = val_loader

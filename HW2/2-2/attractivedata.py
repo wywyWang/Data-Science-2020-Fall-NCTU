@@ -16,13 +16,13 @@ class AttractiveData:
 
         # self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
         # self.TEXT = data.Field(sequential=True, lower=False, tokenize=self.tokenizer, fix_length=self.config['max_size'], pad_token='0')
-        self.TEXT = data.Field(sequential=True, lower=True, batch_first=True, fix_length=self.config['max_seq'])
+        self.TEXT = data.Field(sequential=True, lower=True, batch_first=True)
         self.CATEGORIES_LABEL = data.LabelField(sequential=False, batch_first=True)
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False, batch_first=True)
         self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
 
         self.train_data = data.TabularDataset(
-            path='./data/new_train.csv', format="csv", skip_header=True, 
+            path='./example/new_train.csv', format="csv", skip_header=True, 
             fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
         )
         self.val_data = data.TabularDataset(
@@ -69,7 +69,7 @@ class AttractiveData:
             'us': 'news',
             'racing': 'formulaone'
         }
-        df_test = df_test.replace({'Category': replace_test})
+        df_test = df_test.replace({'Category': replace_train})
 
-        df_train.to_csv('./data/new_train.csv', index=False)
-        df_test.to_csv('./data/new_test.csv', index=False)
+        df_train.to_csv('./example/new_train.csv', index=False)
+        df_test.to_csv('./example/new_val.csv', index=False)

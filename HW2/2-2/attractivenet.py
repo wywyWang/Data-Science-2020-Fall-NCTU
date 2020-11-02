@@ -14,24 +14,20 @@ class AttractiveNet(nn.Module):
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
         self.bigramcnn = nn.Sequential(
-            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=220, kernel_size=config['kernel_size'] - 1, padding=1),
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=220, out_channels=150, kernel_size=config['kernel_size'] - 1, padding=1),
-            nn.ReLU(),
-            nn.Conv1d(in_channels=150, out_channels=100, kernel_size=config['kernel_size'] - 1, padding=1),
+            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU()
         )
         
         self.trigramcnn = nn.Sequential(
-            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=220, kernel_size=config['kernel_size'], padding=1),
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=220, out_channels=150, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU(),
-            nn.Conv1d(in_channels=150, out_channels=100, kernel_size=config['kernel_size'], padding=1),
+            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU()
         )
 
-
+        # self.encoder_origin = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
@@ -39,7 +35,7 @@ class AttractiveNet(nn.Module):
         # self.linear_output = nn.Linear(config['hidden_dim']*4, config['output_dim'])
         
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim'] * 4 * 2, 30),
+            nn.Linear(config['hidden_dim'] * 4, 30),
             nn.ReLU(),
             nn.Linear(30, 1)
         )
@@ -50,17 +46,17 @@ class AttractiveNet(nn.Module):
             if 'bias' in name:
                 nn.init.constant(param, 0.0)
             elif 'weight_ih' in name:
-                nn.init.xavier_normal(param)
+                nn.init.orthogonal_(param)
             elif 'weight_hh' in name:
-                torch.nn.init.orthogonal_(param)
+                nn.init.orthogonal_(param)
 
         for name, param in self.encoder_trigram.named_parameters():
             if 'bias' in name:
                 nn.init.constant(param, 0.0)
             elif 'weight_ih' in name:
-                nn.init.xavier_normal(param)
+                nn.init.orthogonal_(param)
             elif 'weight_hh' in name:
-                torch.nn.init.orthogonal_(param)
+                nn.init.orthogonal_(param)
         # self.hidden = torch.zeros(self.config['num_layers'], self.config['batch_size'], self.config['hidden_dim'])
         # self.cell = torch.zeros(self.config['num_layers'], self.config['batch_size'], self.config['hidden_dim'])
 
@@ -72,9 +68,9 @@ class AttractiveNet(nn.Module):
         # CNN
         # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
         # print(x.shape, flush=True)
-        x = x.transpose(1, 2)
-        x_tricnn = self.trigramcnn(x)
-        x_bicnn = self.bigramcnn(x)
+        x_cnn = x.transpose(1, 2)
+        x_tricnn = self.trigramcnn(x_cnn)
+        x_bicnn = self.bigramcnn(x_cnn)
 
         # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
         x_tricnn = x_tricnn.transpose(1, 2)
@@ -87,18 +83,24 @@ class AttractiveNet(nn.Module):
         # x = x.transpose(1, 2)
 
         output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
-        output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
-
         h_tri, c_tri = h_tri.transpose(0, 1), c_tri.transpose(0, 1)
         h_tri, c_tri = h_tri.reshape(batch, -1), c_tri.reshape(batch, -1)
+
+        output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
         h_bi, c_bi = h_bi.transpose(0, 1), c_bi.transpose(0, 1)
         h_bi, c_bi = h_bi.reshape(batch, -1), c_bi.reshape(batch, -1)
-        x_category = torch.cat((h_tri, c_tri, h_bi, c_bi), dim=1)
 
+        # output_ori, (h_ori, c_ori) = self.encoder_origin(x)
+        # h_ori, c_ori = h_ori.transpose(0, 1), c_ori.transpose(0, 1)
+        # h_ori, c_ori = h_ori.reshape(batch, -1), c_ori.reshape(batch, -1)
+
+        # x_category = torch.cat((h_tri, c_tri, h_bi, c_bi, h_ori, c_ori), dim=1)
+        x_category = torch.cat((h_tri, h_bi), dim=1)
+        
         prediction = self.linear(x_category)
 
-        if phase == 'train':
-            prediction += 3.15
-        else:
-            prediction += 2.8
+        # if phase == 'train':
+        #     prediction += 3.15
+        # else:
+        #     prediction += 2.8
         return prediction
