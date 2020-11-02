@@ -145,8 +145,9 @@ class AttractiveTrainer:
         output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
-        # store config parameters
-        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
+        if epochs == self.config['epochs']:
+            # store config parameters
+            config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
 
-        with open(config_name, 'w') as config_file:
-            config_file.write(str(self.config))
+            with open(config_name, 'w') as config_file:
+                config_file.write(str(self.config))
