@@ -13,8 +13,6 @@ class AttractiveTrainer:
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
         self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=True)
-        # self.model.embedding.token.weight.data[0] = torch.zeros(300)
-        # self.model.embedding.token.weight.data[1] = torch.zeros(300)
 
         # total parameters
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
@@ -36,8 +34,12 @@ class AttractiveTrainer:
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.iteration(epoch)
-            if epoch % 10 == 0 and epoch != 0:
-                self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            if epoch > 50 and epoch < 150:
+                if epoch % 5 == 0:
+                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            else:
+                if epoch % 10 == 0:
+                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
     def iteration(self, epoch):
@@ -140,9 +142,8 @@ class AttractiveTrainer:
         output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
-        if epochs == self.config['epochs']:
-            # store config parameters
-            config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
+        # store config parameters
+        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
 
-            with open(config_name, 'w') as config_file:
-                config_file.write(str(self.config))
+        with open(config_name, 'w') as config_file:
+            config_file.write(str(self.config))
