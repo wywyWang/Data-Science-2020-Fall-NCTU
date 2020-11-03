@@ -24,7 +24,10 @@ class AttractiveTrainer:
             {'params': self.model.encoder_trigram.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
+            {'params': self.model.linear_lstm.parameters()}, 
+            {'params': self.model.relu.parameters()}, 
             {'params': self.model.linear.parameters()}, 
+            {'params': self.model.category_embedding.parameters()}, 
             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         ], lr=config['lr']['linear'], momentum=0.9)
 
@@ -34,7 +37,7 @@ class AttractiveTrainer:
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.iteration(epoch)
-            if epoch > 50 and epoch < 150:
+            if epoch > 50 and epoch < 200:
                 if epoch % 5 == 0:
                     self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
             else:
