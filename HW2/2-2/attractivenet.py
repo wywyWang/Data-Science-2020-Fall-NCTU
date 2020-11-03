@@ -89,6 +89,8 @@ class AttractiveNet(nn.Module):
         output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
         h_bi, c_bi = h_bi.transpose(0, 1), c_bi.transpose(0, 1)
         h_bi, c_bi = h_bi.reshape(batch, -1), c_bi.reshape(batch, -1)
+        
+        # nn.LayerNorm(h_bi)
 
         # output_ori, (h_ori, c_ori) = self.encoder_origin(x)
         # h_ori, c_ori = h_ori.transpose(0, 1), c_ori.transpose(0, 1)
