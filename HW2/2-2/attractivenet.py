@@ -11,7 +11,7 @@ class AttractiveNet(nn.Module):
         self.config = config
 
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
-        self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
+        # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
@@ -30,17 +30,12 @@ class AttractiveNet(nn.Module):
         # self.encoder_origin = nn.LSTM(input_size=config['embedding_dim'], hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-
-        self.linear_lstm = nn.Linear(config['hidden_dim'] * 4, 30)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(config['dropout'])
-        self.linear = nn.Linear(30+config['category_embedding_dim'], 1)
         
-        # self.linear = nn.Sequential(
-        #     nn.Linear(config['hidden_dim'] * 4, 30),
-        #     nn.ReLU(),
-        #     nn.Linear(30, 1)
-        # )
+        self.linear = nn.Sequential(
+            nn.Linear(config['hidden_dim'] * 4, 30),
+            nn.ReLU(),
+            nn.Linear(30, 1)
+        )
         self.init_weights()
 
     def init_weights(self):
@@ -67,7 +62,7 @@ class AttractiveNet(nn.Module):
     def forward(self, x, category, phase):
         batch = x.shape[0]
         x = self.embedding(x)
-        category_embedding = self.category_embedding(category)
+        # category_embedding = self.category_embedding(category)
 
         # CNN
         # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
@@ -85,26 +80,18 @@ class AttractiveNet(nn.Module):
         h_tri, c_tri = h_tri.transpose(0, 1), c_tri.transpose(0, 1)
         h_tri, c_tri = h_tri.reshape(batch, -1), c_tri.reshape(batch, -1)
         layernorm_tri = nn.LayerNorm(h_tri.size()[1:])
-        # h_tri = layernorm_tri(h_tri)
 
         output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
         h_bi, c_bi = h_bi.transpose(0, 1), c_bi.transpose(0, 1)
         h_bi, c_bi = h_bi.reshape(batch, -1), c_bi.reshape(batch, -1)
         layernorm_bi = nn.LayerNorm(h_bi.size()[1:])
-        # h_bi = layernorm_bi(h_bi)
 
         # output_ori, (h_ori, c_ori) = self.encoder_origin(x)
         # h_ori, c_ori = h_ori.transpose(0, 1), c_ori.transpose(0, 1)
         # h_ori, c_ori = h_ori.reshape(batch, -1), c_ori.reshape(batch, -1)
 
-        # x_category = torch.cat((h_tri, h_bi), dim=1)
+        x_category = torch.cat((h_tri, h_bi), dim=1)
 
-        x_lstm = torch.cat((h_tri, h_bi), dim=1)
-        x_linear = self.relu(self.linear_lstm(x_lstm))
-        x_linear = self.dropout(x_linear)
-        x_category = torch.cat((x_linear, category_embedding), dim=1)
         prediction = self.linear(x_category)
-        
-        # prediction = self.linear(x_category)
 
         return prediction

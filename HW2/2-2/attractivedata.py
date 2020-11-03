@@ -5,13 +5,14 @@ from torchtext import data
 
 
 class AttractiveData:
-    def __init__(self, train_file, test_file, pretrained_file, config):
+    def __init__(self, train_file, val_file, test_file, pretrained_file, config):
         self.config = config
-        self.preprocess(train_file, test_file)
+        self.preprocess(train_file, val_file, test_file)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.df_train = pd.read_csv('./data/new_train.csv')
+        self.df_train = pd.read_csv('./example/new_train.csv')
+        self.df_val = pd.read_csv('./example/new_val.csv')
         self.df_test = pd.read_csv('./data/new_test.csv')
 
         # self.TEXT = data.Field(sequential=True, init_token='<s>', lower=False, tokenize=self.tokenizer, fix_length=max_size, pad_token='0')
@@ -46,12 +47,10 @@ class AttractiveData:
         self.trainloader = data.BucketIterator(self.train_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
         self.valloader = data.BucketIterator(self.val_data, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=False)
 
-    def preprocess(self, train_file, test_file):
+    def preprocess(self, train_file, val_file, test_file):
         df_train = pd.read_csv(train_file)
+        df_val = pd.read_csv(val_file)
         df_test = pd.read_csv(test_file)
-        
-        # # eliminate train mean
-        # df_train.Label -= 3.15
 
         # process train categories
         replace_train = {
@@ -61,6 +60,9 @@ class AttractiveData:
             'gardening': 'home'
         }
         df_train = df_train.replace({'Category': replace_train})
+        df_train['Headline'] = df_train['Category'] + ' ' + df_train['Headline']
+        df_val = df_val.replace({'Category': replace_train})
+        df_val['Headline'] = df_val['Category'] + ' ' + df_val['Headline']
 
         # process test categories
         replace_test = {
@@ -69,7 +71,9 @@ class AttractiveData:
             'us': 'news',
             'racing': 'formulaone'
         }
-        df_test = df_test.replace({'Category': replace_train})
+        df_test = df_test.replace({'Category': replace_test})
+        df_test['Headline'] = df_test['Category'] + ' ' + df_test['Headline']
 
         df_train.to_csv('./example/new_train.csv', index=False)
-        df_test.to_csv('./example/new_val.csv', index=False)
+        df_val.to_csv('./example/new_val.csv', index=False)
+        df_test.to_csv('./data/new_test.csv', index=False)
