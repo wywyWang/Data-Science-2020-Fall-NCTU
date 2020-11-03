@@ -60,9 +60,9 @@ class AttractiveData:
             'gardening': 'home'
         }
         df_train = df_train.replace({'Category': replace_train})
-        df_train['Headline'] = df_train['Category'] + ' ' + df_train['Headline']
+        # df_train['Headline'] = df_train['Category'] + ' ' + df_train['Headline']
         df_val = df_val.replace({'Category': replace_train})
-        df_val['Headline'] = df_val['Category'] + ' ' + df_val['Headline']
+        # df_val['Headline'] = df_val['Category'] + ' ' + df_val['Headline']
 
         # process test categories
         replace_test = {
@@ -72,7 +72,7 @@ class AttractiveData:
             'racing': 'formulaone'
         }
         df_test = df_test.replace({'Category': replace_test})
-        df_test['Headline'] = df_test['Category'] + ' ' + df_test['Headline']
+        # df_test['Headline'] = df_test['Category'] + ' ' + df_test['Headline']
 
         df_train.to_csv('./example/new_train.csv', index=False)
         df_val.to_csv('./example/new_val.csv', index=False)
