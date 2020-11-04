@@ -1,7 +1,9 @@
 import pandas as pd
+import numpy as np
 import torch
 import torchtext
 from torchtext import data
+from sklearn.model_selection import KFold
 
 
 class AttractiveData:
@@ -20,17 +22,20 @@ class AttractiveData:
         self.LABEL = data.Field(dtype=torch.float, sequential=False, use_vocab=False, batch_first=True)
         self.ID = data.Field(sequential=False, use_vocab=False, batch_first=True)
 
+        self.train_field = [('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
+        self.test_field = [('ID', self.ID), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', None)]
+
         self.train_data = data.TabularDataset(
             path='./example/new_train.csv', format="csv", skip_header=True, 
-            fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
+            fields=self.train_field
         )
         self.val_data = data.TabularDataset(
             path='./example/new_val.csv', format="csv", skip_header=True, 
-            fields=[('ID', None), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', self.LABEL)]
+            fields=self.train_field
         )
         self.test_data = data.TabularDataset(
             path='./data/new_test.csv', format="csv", skip_header=True, 
-            fields=[('ID', self.ID), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', None)]
+            fields=self.test_field
         )
         self.train_len = len(self.train_data)
         self.test_len = len(self.test_data)
@@ -75,3 +80,12 @@ class AttractiveData:
         df_train.to_csv('./example/new_train.csv', index=False)
         df_val.to_csv('./example/new_val.csv', index=False)
         df_test.to_csv('./data/new_test.csv', index=False)
+
+    def get_data(self):
+        kf = KFold(n_splits=self.config['n_splits'], shuffle=True, random_state=1234)
+        train_data_arr = np.array(self.train_data.examples)
+        for train_index, val_index in kf.split(train_data_arr):
+            yield(
+                data.Dataset(train_data_arr[train_index], fields=self.train_field), 
+                data.Dataset(train_data_arr[val_index], fields=self.train_field)
+            )

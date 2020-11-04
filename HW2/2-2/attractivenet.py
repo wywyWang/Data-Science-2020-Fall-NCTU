@@ -28,13 +28,13 @@ class AttractiveNet(nn.Module):
         )
 
         self.encoder_bigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-        self.encoder_bigram_second = nn.LSTM(input_size=config['hidden_dim']*2, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        # self.encoder_bigram_second = nn.LSTM(input_size=config['hidden_dim']*2, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         
         self.encoder_trigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-        self.encoder_trigram_second = nn.LSTM(input_size=config['hidden_dim']*2, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        # self.encoder_trigram_second = nn.LSTM(input_size=config['hidden_dim']*2, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim'] * 8, 30),
+            nn.Linear(config['hidden_dim'] * 4, 30),
             nn.ReLU(),
             nn.Linear(30, 1)
         )
@@ -48,13 +48,13 @@ class AttractiveNet(nn.Module):
                 nn.init.orthogonal_(param)
             elif 'weight_hh' in name:
                 nn.init.orthogonal_(param)
-        for name, param in self.encoder_bigram_second.named_parameters():
-            if 'bias' in name:
-                nn.init.constant(param, 0.0)
-            elif 'weight_ih' in name:
-                nn.init.orthogonal_(param)
-            elif 'weight_hh' in name:
-                nn.init.orthogonal_(param)
+        # for name, param in self.encoder_bigram_second.named_parameters():
+        #     if 'bias' in name:
+        #         nn.init.constant(param, 0.0)
+        #     elif 'weight_ih' in name:
+        #         nn.init.orthogonal_(param)
+        #     elif 'weight_hh' in name:
+        #         nn.init.orthogonal_(param)
 
         for name, param in self.encoder_trigram_first.named_parameters():
             if 'bias' in name:
@@ -63,13 +63,13 @@ class AttractiveNet(nn.Module):
                 nn.init.orthogonal_(param)
             elif 'weight_hh' in name:
                 nn.init.orthogonal_(param)
-        for name, param in self.encoder_trigram_second.named_parameters():
-            if 'bias' in name:
-                nn.init.constant(param, 0.0)
-            elif 'weight_ih' in name:
-                nn.init.orthogonal_(param)
-            elif 'weight_hh' in name:
-                nn.init.orthogonal_(param)
+        # for name, param in self.encoder_trigram_second.named_parameters():
+        #     if 'bias' in name:
+        #         nn.init.constant(param, 0.0)
+        #     elif 'weight_ih' in name:
+        #         nn.init.orthogonal_(param)
+        #     elif 'weight_hh' in name:
+        #         nn.init.orthogonal_(param)
 
     def forward(self, x, category, phase):
         batch = x.shape[0]
@@ -89,24 +89,20 @@ class AttractiveNet(nn.Module):
         # LSTM: (seq_length, batch_size, embedding_size)
 
         output_tri_first, (h_tri_first, c_tri_first) = self.encoder_trigram_first(x_tricnn)
-        output_tri_second, (h_tri_second, c_tri_second) = self.encoder_trigram_second(output_tri_first)
+        # output_tri_second, (h_tri_second, c_tri_second) = self.encoder_trigram_second(output_tri_first)
         h_tri_first = h_tri_first.transpose(0, 1)
         h_tri_first = h_tri_first.reshape(batch, -1)
-        h_tri_second = h_tri_second.transpose(0, 1)
-        h_tri_second = h_tri_second.reshape(batch, -1)
+        # h_tri_second = h_tri_second.transpose(0, 1)
+        # h_tri_second = h_tri_second.reshape(batch, -1)
 
         output_bi_first, (h_bi_first, c_bi_first) = self.encoder_bigram_first(x_bicnn)
-        output_bi_second, (h_bi_second, c_bi_second) = self.encoder_bigram_second(output_bi_first)
+        # output_bi_second, (h_bi_second, c_bi_second) = self.encoder_bigram_second(output_bi_first)
         h_bi_first = h_bi_first.transpose(0, 1)
         h_bi_first = h_bi_first.reshape(batch, -1)
-        h_bi_second = h_bi_second.transpose(0, 1)
-        h_bi_second = h_bi_second.reshape(batch, -1)
+        # h_bi_second = h_bi_second.transpose(0, 1)
+        # h_bi_second = h_bi_second.reshape(batch, -1)
 
-        # output_ori, (h_ori, c_ori) = self.encoder_origin(x)
-        # h_ori, c_ori = h_ori.transpose(0, 1), c_ori.transpose(0, 1)
-        # h_ori, c_ori = h_ori.reshape(batch, -1), c_ori.reshape(batch, -1)
-
-        x_category = torch.cat((h_tri_first, h_tri_second, h_bi_first, h_bi_second), dim=1)
+        x_category = torch.cat((h_tri_first, h_bi_first), dim=1)
 
         prediction = self.linear(x_category)
 

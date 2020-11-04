@@ -2,11 +2,12 @@ import torch.nn as nn
 import torch
 import tqdm
 import math
+from torchtext import data
 from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, config, device, train_loader, val_loader, pretrained_embeddings):
+    def __init__(self, config, device, fold_data, pretrained_embeddings):
         self.config = config
         
         self.criterion = torch.nn.MSELoss(reduction='sum')
@@ -21,35 +22,53 @@ class AttractiveTrainer:
         self.optimizer = torch.optim.SGD([
             # {'params': self.model.encoder_origin.parameters()}, 
             {'params': self.model.encoder_bigram_first.parameters()}, 
-            {'params': self.model.encoder_bigram_second.parameters()}, 
+            # {'params': self.model.encoder_bigram_second.parameters()}, 
             {'params': self.model.encoder_trigram_first.parameters()}, 
-            {'params': self.model.encoder_trigram_second.parameters()}, 
+            # {'params': self.model.encoder_trigram_second.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         ], lr=config['lr']['linear'], momentum=0.9)
 
-        self.train_loader = train_loader
-        self.val_loader = val_loader
+        self.fold_data = fold_data
 
     def train(self):
+        best_val_loss = 1e6
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
-            self.iteration(epoch)
-            if epoch > 30 and epoch < 200:
-                if epoch % 5 == 0:
-                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
-            else:
-                if epoch % 10 == 0:
-                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            val_loss = 0
+            for each_train, each_val in self.fold_data:
+                self.train_len = len(each_train)
+                self.val_len = len(each_val)
+                trainloader = data.BucketIterator(each_train, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
+                valloader = data.BucketIterator(each_val, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device)
+                train_loss, current_val_loss = self.iteration(epoch, trainloader, valloader)
+                val_loss += current_val_loss
+            
+            val_loss /= self.config['n_splits']
+            if val_loss <= best_val_loss:
+                best_val_loss = val_loss
+                self.save(self.config['save_name'], self.config['timestr'], epoch, val_loss)
+            self.train_loss = train_loss
+            self.val_loss = val_loss
+            with open('log/{}'.format(self.config['timestr']), 'a') as f_train:
+                f_train.write(str(self.train_loss) + ', ' + '{}-fold cv loss: '.format(self.config['n_splits']) + str(val_loss) + '\n')
+            print()
+            print("EP_{} | {}-fold val loss: {} |".format(epoch, self.config['n_splits'], val_loss))
+
+            # if epoch > 30 and epoch < 200:
+            #     if epoch % 5 == 0:
+            #         self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            # else:
+            #     if epoch % 10 == 0:
+            #         self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
-    def iteration(self, epoch):
+    def iteration(self, epoch, train_loader, val_loader):
         self.model.train()
         
         avg_loss = 0.0
-        print("====")
-        for i, data in enumerate(self.train_loader):
+        for i, data in enumerate(train_loader):
             inputs = data.Headline
             attractive_labels = data.Label
             attractive_categories = data.Category
@@ -89,7 +108,8 @@ class AttractiveTrainer:
                 #     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
-        self.train_loss = self.evaluate(self.train_loader, self.val_loader, 'train')
+        train_loss, val_loss = self.evaluate(train_loader, val_loader, 'train')
+        return train_loss, val_loss
 
     def evaluate(self, data_loader, val_data_loader, str_code):
         self.model.eval()
@@ -111,7 +131,7 @@ class AttractiveTrainer:
 
                 train_loss += loss.item()
 
-        train_loss /= self.config['train_len']
+        train_loss /= self.train_len
 
         val_loss = 0.0
         with torch.no_grad():
@@ -130,22 +150,22 @@ class AttractiveTrainer:
 
                 val_loss += loss.item()
 
-        val_loss /= self.config['val_len']
+        val_loss /= self.val_len
 
-        print()
-        print("EP_{} | train loss: {} | val loss: {} |".format(str_code, train_loss, val_loss))
+        # print()
+        # print("EP_{} | train loss: {} | val loss: {} |".format(str_code, train_loss, val_loss))
 
         with open('log/{}'.format(self.config['timestr']), 'a') as f_train:
             f_train.write(str(train_loss) + ', ' + str(val_loss) + '\n')
 
-        return train_loss
+        return train_loss, val_loss
 
     def save(self, prefix_name, timestr, epochs, loss):
-        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
+        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.6f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
         # store config parameters
-        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.4f}'.format(loss)) + '.' + str(epochs)
+        config_name = './config/' + prefix_name + '_' + str(timestr) + '_' + str('{:.6f}'.format(loss)) + '.' + str(epochs)
 
         with open(config_name, 'w') as config_file:
             config_file.write(str(self.config))
