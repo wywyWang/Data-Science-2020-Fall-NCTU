@@ -2,7 +2,7 @@ import pandas as pd
 
 
 if __name__ == "__main__":
-    model_list = ['CNN_LSTM_20201104-111439_0.3427.90', 'CNN_LSTM_20201104-112044_0.3419.80', 'CNN_LSTM_20201104-112639_0.3370.80', 'CNN_LSTM_20201104-113008_0.3413.95', 'CNN_LSTM_20201104-113437_0.3395.90', 'CNN_LSTM_20201104-113908_0.3524.85', 'CNN_LSTM_20201104-114114_0.3542.80']
+    model_list = ['CNN_LSTM_20201104-111439_0.3427.90', 'CNN_LSTM_20201104-112044_0.3813.65']
     folder = './predict/'
     predict = [0] * 227         # 227: test size
     for idx, model_name in enumerate(model_list):
