@@ -14,7 +14,7 @@ class AttractiveTrainer:
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
-        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
+        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=True)
 
         # total parameters
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
