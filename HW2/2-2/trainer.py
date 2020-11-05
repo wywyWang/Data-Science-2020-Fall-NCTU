@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import tqdm
 import math
+import os
 from torchtext import data
 from attractivenet import AttractiveNet
 
@@ -33,6 +34,10 @@ class AttractiveTrainer:
 
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.folder_name = './model/' + self.config['save_name'] + '_' + self.config['timestr'] + '/'
+        
+        if not os.path.exists(self.folder_name):
+            os.makedirs(self.folder_name)
 
     def train(self):
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
@@ -139,7 +144,7 @@ class AttractiveTrainer:
         return train_loss, val_loss
 
     def save(self, prefix_name, timestr, epochs, loss):
-        output_name = './model/' + prefix_name + '_' + str(timestr) + '_' + str('{:.6f}'.format(loss)) + '.' + str(epochs)
+        output_name = self.folder_name + str('{:.6f}'.format(loss)) + '.' + str(epochs)
         torch.save(self.model.state_dict(), output_name)
 
         # store config parameters
