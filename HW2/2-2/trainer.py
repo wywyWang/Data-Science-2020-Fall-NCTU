@@ -22,9 +22,9 @@ class AttractiveTrainer:
         self.optimizer = torch.optim.SGD([
             # {'params': self.model.encoder_origin.parameters()}, 
             {'params': self.model.encoder_bigram_first.parameters()}, 
-            # {'params': self.model.encoder_bigram_second.parameters()}, 
+            {'params': self.model.encoder_bigram_second.parameters()}, 
             {'params': self.model.encoder_trigram_first.parameters()}, 
-            # {'params': self.model.encoder_trigram_second.parameters()}, 
+            {'params': self.model.encoder_trigram_second.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
