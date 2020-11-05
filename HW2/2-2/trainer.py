@@ -13,7 +13,7 @@ class AttractiveTrainer:
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.device = device
         self.model = AttractiveNet(self.config).to(self.device)
-        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=True)
+        self.model.embedding.token.weight = nn.Parameter(pretrained_embeddings.to(self.device), requires_grad=False)
 
         # total parameters
         self.config['total_params'] = sum(p.numel() for p in self.model.parameters())
@@ -22,9 +22,9 @@ class AttractiveTrainer:
         self.optimizer = torch.optim.SGD([
             # {'params': self.model.encoder_origin.parameters()}, 
             {'params': self.model.encoder_bigram_first.parameters()}, 
-            {'params': self.model.encoder_bigram_second.parameters()}, 
+            # {'params': self.model.encoder_bigram_second.parameters()}, 
             {'params': self.model.encoder_trigram_first.parameters()}, 
-            {'params': self.model.encoder_trigram_second.parameters()}, 
+            # {'params': self.model.encoder_trigram_second.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
@@ -41,7 +41,7 @@ class AttractiveTrainer:
                 if epoch % 5 == 0:
                     self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
             else:
-                if epoch % 10 == 0:
+                if epoch % 10 == 0 and epoch != 0:
                     self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
             print()
             print("EP_{} | train loss: {} | val loss: {} |".format(epoch, self.train_loss, self.val_loss))
