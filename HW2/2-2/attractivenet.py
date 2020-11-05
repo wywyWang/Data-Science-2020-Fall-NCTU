@@ -17,14 +17,16 @@ class AttractiveNet(nn.Module):
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Dropout(config['dropout'])
         )
         
         self.trigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Dropout(config['dropout'])
         )
 
         self.encoder_bigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)

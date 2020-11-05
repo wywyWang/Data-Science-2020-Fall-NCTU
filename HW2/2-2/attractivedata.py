@@ -81,7 +81,10 @@ class AttractiveData:
         df_val.to_csv('./example/new_val.csv', index=False)
         df_test.to_csv('./data/new_test.csv', index=False)
 
-    def get_data(self):
+    def k_fold_data(self):
+        """
+        k fold training set, but unused
+        """
         kf = KFold(n_splits=self.config['n_splits'], shuffle=True, random_state=1234)
         train_data_arr = np.array(self.train_data.examples)
         for train_index, val_index in kf.split(train_data_arr):

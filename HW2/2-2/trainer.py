@@ -7,7 +7,7 @@ from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
 
-    def __init__(self, config, device, fold_data, pretrained_embeddings):
+    def __init__(self, config, device, train_loader, val_loader, pretrained_embeddings):
         self.config = config
         
         self.criterion = torch.nn.MSELoss(reduction='sum')
@@ -31,44 +31,27 @@ class AttractiveTrainer:
             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         ], lr=config['lr']['linear'], momentum=0.9)
 
-        self.fold_data = fold_data
+        self.train_loader = train_loader
+        self.val_loader = val_loader
 
     def train(self):
-        best_val_loss = 1e6
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
-            val_loss = 0
-            for each_train, each_val in self.fold_data:
-                self.train_len = len(each_train)
-                self.val_len = len(each_val)
-                trainloader = data.BucketIterator(each_train, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device, train=True, shuffle=True)
-                valloader = data.BucketIterator(each_val, sort_key=lambda x: len(x.Headline), batch_size=self.config['batch_size'], device=self.device)
-                train_loss, current_val_loss = self.iteration(epoch, trainloader, valloader)
-                val_loss += current_val_loss
-            
-            val_loss /= self.config['n_splits']
-            if val_loss <= best_val_loss:
-                best_val_loss = val_loss
-                self.save(self.config['save_name'], self.config['timestr'], epoch, val_loss)
-            self.train_loss = train_loss
-            self.val_loss = val_loss
-            with open('log/{}'.format(self.config['timestr']), 'a') as f_train:
-                f_train.write(str(self.train_loss) + ', ' + '{}-fold cv loss: '.format(self.config['n_splits']) + str(val_loss) + '\n')
+            self.train_loss, self.val_loss = self.iteration(epoch)
+            if epoch > 30 and epoch < 200:
+                if epoch % 5 == 0:
+                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            else:
+                if epoch % 10 == 0:
+                    self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
             print()
-            print("EP_{} | {}-fold val loss: {} |".format(epoch, self.config['n_splits'], val_loss))
-
-            # if epoch > 30 and epoch < 200:
-            #     if epoch % 5 == 0:
-            #         self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
-            # else:
-            #     if epoch % 10 == 0:
-            #         self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
+            print("EP_{} | train loss: {} | val loss: {} |".format(epoch, self.train_loss, self.val_loss))
         self.save(self.config['save_name'], self.config['timestr'], self.config['epochs'], self.train_loss)
 
-    def iteration(self, epoch, train_loader, val_loader):
+    def iteration(self, epoch):
         self.model.train()
         
         avg_loss = 0.0
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(self.train_loader):
             inputs = data.Headline
             attractive_labels = data.Label
             attractive_categories = data.Category
@@ -81,11 +64,6 @@ class AttractiveTrainer:
             #         f_train.write(str(parameters) + '\n')
             #     f_train.write(str('==============') + '\n')
             attractive_prediction = self.model(inputs, attractive_categories, phase='train')
-
-            # print(attractive_prediction.view(-1))
-            # print(attractive_labels)
-            # print(self.criterion(attractive_prediction.view(-1), attractive_labels))
-            # 1/0
 
             # loss
             loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
@@ -108,7 +86,7 @@ class AttractiveTrainer:
                 #     f_train.write(str(post_fix) + '\n')
 
         # evaluate training accuracy
-        train_loss, val_loss = self.evaluate(train_loader, val_loader, 'train')
+        train_loss, val_loss = self.evaluate(self.train_loader, self.val_loader, 'train')
         return train_loss, val_loss
 
     def evaluate(self, data_loader, val_data_loader, str_code):
@@ -131,7 +109,7 @@ class AttractiveTrainer:
 
                 train_loss += loss.item()
 
-        train_loss /= self.train_len
+        train_loss /= self.config['train_len']
 
         val_loss = 0.0
         with torch.no_grad():
@@ -150,7 +128,7 @@ class AttractiveTrainer:
 
                 val_loss += loss.item()
 
-        val_loss /= self.val_len
+        val_loss /= self.config['val_len']
 
         # print()
         # print("EP_{} | train loss: {} | val loss: {} |".format(str_code, train_loss, val_loss))
