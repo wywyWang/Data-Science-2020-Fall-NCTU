@@ -26,7 +26,7 @@ class AttractiveTrainer:
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
-            {'params': self.model.category_embedding.parameters()}, 
+            # {'params': self.model.category_embedding.parameters()}, 
             {'params': self.model.embedding.parameters(), 'lr': config['lr']['embedding']},
         ], lr=config['lr']['linear'], momentum=0.9)
 
