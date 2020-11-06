@@ -11,7 +11,7 @@ class AttractiveNet(nn.Module):
         self.config = config
 
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
-        # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
+        self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
@@ -33,7 +33,7 @@ class AttractiveNet(nn.Module):
         self.encoder_trigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim'] * 4 + 2 * 2, 30),
+            nn.Linear(config['hidden_dim'] * 4 + 2 * 2 + config['category_embedding_dim'], 30),
             nn.ReLU(),
             nn.Linear(30, 1)
         )
@@ -59,7 +59,7 @@ class AttractiveNet(nn.Module):
     def forward(self, x, category, phase):
         batch = x.shape[0]
         x = self.embedding(x)
-        # category_embedding = self.category_embedding(category)
+        category_embedding = self.category_embedding(category)
 
         # CNN
         # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
@@ -88,7 +88,8 @@ class AttractiveNet(nn.Module):
         h_bi_first_avg_pool, h_bi_first_max_pool = h_bi_first_avg_pool.unsqueeze(1), h_bi_first_max_pool.unsqueeze(1)
         
         x_category = torch.cat((h_tri_first, h_tri_first_avg_pool, h_tri_first_max_pool, 
-                                h_bi_first, h_bi_first_avg_pool, h_bi_first_max_pool), dim=1)
+                                h_bi_first, h_bi_first_avg_pool, h_bi_first_max_pool, 
+                                category_embedding), dim=1)
 
         prediction = self.linear(x_category)
 
