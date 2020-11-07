@@ -14,17 +14,17 @@ class AttractiveNet(nn.Module):
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
         self.bigramcnn = nn.Sequential(
-            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size']-1, padding=1),
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-1, padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
         
         self.trigramcnn = nn.Sequential(
-            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
