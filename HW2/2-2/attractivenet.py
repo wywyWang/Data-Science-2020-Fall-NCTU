@@ -14,9 +14,9 @@ class AttractiveNet(nn.Module):
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
         self.bigramcnn = nn.Sequential(
-            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size']-1, padding=1),
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=200, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
+            nn.Conv1d(in_channels=200, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
@@ -29,8 +29,8 @@ class AttractiveNet(nn.Module):
             nn.Dropout(config['dropout'])
         )
 
-        self.encoder_bigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-        self.encoder_trigram_first = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         
         self.linear = nn.Sequential(
             nn.Linear(config['hidden_dim'] * 4 + 2 * 2, 30),
@@ -40,7 +40,7 @@ class AttractiveNet(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        for name, param in self.encoder_bigram_first.named_parameters():
+        for name, param in self.encoder_bigram.named_parameters():
             if 'bias' in name:
                 nn.init.constant_(param, 0.0)
             elif 'weight_ih' in name:
@@ -48,7 +48,7 @@ class AttractiveNet(nn.Module):
             elif 'weight_hh' in name:
                 nn.init.orthogonal_(param)
 
-        for name, param in self.encoder_trigram_first.named_parameters():
+        for name, param in self.encoder_trigram.named_parameters():
             if 'bias' in name:
                 nn.init.constant_(param, 0.0)
             elif 'weight_ih' in name:
@@ -73,22 +73,22 @@ class AttractiveNet(nn.Module):
 
         # LSTM: (seq_length, batch_size, embedding_size)
 
-        output_tri_first, (h_tri_first, c_tri_first) = self.encoder_trigram_first(x_tricnn)  
-        h_tri_first = h_tri_first.transpose(0, 1)
-        h_tri_first = h_tri_first.reshape(batch, -1)
-        h_tri_first_avg_pool = torch.mean(h_tri_first, 1)
-        h_tri_first_max_pool, _ = torch.max(h_tri_first, 1)
-        h_tri_first_avg_pool, h_tri_first_max_pool = h_tri_first_avg_pool.unsqueeze(1), h_tri_first_max_pool.unsqueeze(1)
+        output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)  
+        h_tri = h_tri.transpose(0, 1)
+        h_tri = h_tri.reshape(batch, -1)
+        h_tri_avg_pool = torch.mean(h_tri, 1)
+        h_tri_max_pool, _ = torch.max(h_tri, 1)
+        h_tri_avg_pool, h_tri_max_pool = h_tri_avg_pool.unsqueeze(1), h_tri_max_pool.unsqueeze(1)
 
-        output_bi_first, (h_bi_first, c_bi_first) = self.encoder_bigram_first(x_bicnn)
-        h_bi_first = h_bi_first.transpose(0, 1)
-        h_bi_first = h_bi_first.reshape(batch, -1)
-        h_bi_first_avg_pool = torch.mean(h_bi_first, 1)
-        h_bi_first_max_pool, _ = torch.max(h_tri_first, 1)
-        h_bi_first_avg_pool, h_bi_first_max_pool = h_bi_first_avg_pool.unsqueeze(1), h_bi_first_max_pool.unsqueeze(1)
+        output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
+        h_bi = h_bi.transpose(0, 1)
+        h_bi = h_bi.reshape(batch, -1)
+        h_bi_avg_pool = torch.mean(h_bi, 1)
+        h_bi_max_pool, _ = torch.max(h_tri, 1)
+        h_bi_avg_pool, h_bi_max_pool = h_bi_avg_pool.unsqueeze(1), h_bi_max_pool.unsqueeze(1)
         
-        x_category = torch.cat((h_tri_first, h_tri_first_avg_pool, h_tri_first_max_pool, 
-                                h_bi_first, h_bi_first_avg_pool, h_bi_first_max_pool), dim=1)
+        x_category = torch.cat((h_tri, h_tri_avg_pool, h_tri_max_pool, 
+                                h_bi, h_bi_avg_pool, h_bi_max_pool), dim=1)
 
         prediction = self.linear(x_category)
 

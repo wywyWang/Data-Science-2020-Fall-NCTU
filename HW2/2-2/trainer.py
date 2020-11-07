@@ -21,8 +21,8 @@ class AttractiveTrainer:
         self.config['total_learned_params'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
         self.optimizer = torch.optim.SGD([
-            {'params': self.model.encoder_bigram_first.parameters()}, 
-            {'params': self.model.encoder_trigram_first.parameters()}, 
+            {'params': self.model.encoder_bigram.parameters()}, 
+            {'params': self.model.encoder_trigram.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
