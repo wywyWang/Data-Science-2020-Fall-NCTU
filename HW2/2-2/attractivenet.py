@@ -85,8 +85,8 @@ class AttractiveNet(nn.Module):
         h_bi_max_pool, _ = torch.max(h_bi, 2)
         h_bi = h_bi.reshape(batch, -1)
 
-        x_category = torch.cat((h_tri, h_tri_avg_pool, 
-                                h_bi, h_bi_avg_pool), dim=1)
+        x_category = torch.cat((h_tri, h_tri_max_pool, 
+                                h_bi, h_bi_max_pool), dim=1)
 
         prediction = self.linear(x_category)
 
