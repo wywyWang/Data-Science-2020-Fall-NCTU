@@ -7,6 +7,9 @@ from attractiveembedding import AttractiveEmbedding, CategoryEmbedding
 
 
 class AttractiveNet(nn.Module):
+    """
+    AttractiveNet: implementation of DataScience HW2.
+    """
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -72,7 +75,6 @@ class AttractiveNet(nn.Module):
         x_bicnn = x_bicnn.transpose(1, 2)
 
         # LSTM: (batch_size, seq_length, embedding_size)
-
         output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
         h_tri = h_tri.transpose(0, 1)
         h_tri_avg_pool = torch.mean(h_tri, 2)

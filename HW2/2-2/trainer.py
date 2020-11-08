@@ -7,7 +7,9 @@ from torchtext import data
 from attractivenet import AttractiveNet
 
 class AttractiveTrainer:
-
+    """
+    Trainer of AttractiveNet
+    """
     def __init__(self, config, device, train_loader, val_loader, pretrained_embeddings):
         self.config = config
         
