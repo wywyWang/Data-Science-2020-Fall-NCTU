@@ -16,9 +16,9 @@ class AttractiveNet(nn.Module):
 
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-1, padding=1),
-            nn.ReLU6(),
+            nn.ReLU(),
             nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
-            nn.ReLU6(),
+            nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
         
@@ -71,7 +71,7 @@ class AttractiveNet(nn.Module):
         x_tricnn = x_tricnn.transpose(1, 2)
         x_bicnn = x_bicnn.transpose(1, 2)
 
-        # LSTM: (seq_length, batch_size, embedding_size)
+        # LSTM: (batch_size, seq_length, embedding_size)
 
         output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
         h_tri = h_tri.transpose(0, 1)
