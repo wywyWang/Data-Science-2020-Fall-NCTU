@@ -7,14 +7,23 @@ from sklearn.model_selection import KFold
 
 
 class AttractiveData:
+    """
+    Read data and use TorchText to process to BucketIterator
+    Args:
+        train_file: training filename
+        val_file: validation filename
+        test_file: testing filename
+        pretrained_file: pretrained static word embedding name
+        config: config setting
+    """
     def __init__(self, train_file, val_file, test_file, pretrained_file, config):
         self.config = config
         self.preprocess(train_file, val_file, test_file)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.df_train = pd.read_csv('./example/new_train.csv')
-        self.df_val = pd.read_csv('./example/new_val.csv')
+        self.df_train = pd.read_csv('./data/new_train.csv')
+        # self.df_val = pd.read_csv('./example/new_val.csv')
         self.df_test = pd.read_csv('./data/new_test.csv')
 
         self.TEXT = data.Field(sequential=True, lower=True, batch_first=True)
@@ -26,11 +35,11 @@ class AttractiveData:
         self.test_field = [('ID', self.ID), ('Headline', self.TEXT), ('Category', self.CATEGORIES_LABEL), ('Label', None)]
 
         self.train_data = data.TabularDataset(
-            path='./example/new_train.csv', format="csv", skip_header=True, 
+            path='./data/new_train.csv', format="csv", skip_header=True, 
             fields=self.train_field
         )
         self.val_data = data.TabularDataset(
-            path='./example/new_val.csv', format="csv", skip_header=True, 
+            path='./data/new_val.csv', format="csv", skip_header=True, 
             fields=self.train_field
         )
         self.test_data = data.TabularDataset(
@@ -63,9 +72,7 @@ class AttractiveData:
             'gardening': 'home'
         }
         df_train = df_train.replace({'Category': replace_train})
-        # df_train['Headline'] = df_train['Category'] + ' ' + df_train['Headline']
         df_val = df_val.replace({'Category': replace_train})
-        # df_val['Headline'] = df_val['Category'] + ' ' + df_val['Headline']
 
         # process test categories
         replace_test = {
@@ -75,10 +82,9 @@ class AttractiveData:
             'racing': 'formulaone'
         }
         df_test = df_test.replace({'Category': replace_test})
-        # df_test['Headline'] = df_test['Category'] + ' ' + df_test['Headline']
 
-        df_train.to_csv('./example/new_train.csv', index=False)
-        df_val.to_csv('./example/new_val.csv', index=False)
+        df_train.to_csv('./data/new_train.csv', index=False)
+        df_val.to_csv('./data/new_val.csv', index=False)
         df_test.to_csv('./data/new_test.csv', index=False)
 
     def k_fold_data(self):

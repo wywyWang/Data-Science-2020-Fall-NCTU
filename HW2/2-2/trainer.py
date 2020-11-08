@@ -78,11 +78,11 @@ class AttractiveTrainer:
 
             avg_loss += loss.item()
 
-            post_fix = {
-                "epoch": epoch,
-                "iter": i,
-                "avg_loss": avg_loss / (i + 1) / self.config['batch_size']
-            }
+            # post_fix = {
+            #     "epoch": epoch,
+            #     "iter": i,
+            #     "avg_loss": avg_loss / (i + 1) / self.config['batch_size']
+            # }
 
             # if i % self.config['log_steps'] == 0:
                 # with open('log/{}_{}_train'.format(self.config['timestr'], epoch), 'a') as f_train:
@@ -107,8 +107,6 @@ class AttractiveTrainer:
 
                 # MSELoss
                 loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
-                
-                # print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
 
                 train_loss += loss.item()
 
@@ -126,8 +124,6 @@ class AttractiveTrainer:
 
                 # MSELoss
                 loss = self.criterion(attractive_prediction.view(-1), attractive_labels)
-                
-                # print(attractive_prediction.view(-1)[0:3], attractive_labels[0:3], loss)
 
                 val_loss += loss.item()
 

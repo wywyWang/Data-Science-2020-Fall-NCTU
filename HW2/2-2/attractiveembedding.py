@@ -3,6 +3,9 @@ import torch.nn as nn
 import math
 
 class AttractiveEmbedding(nn.Module):
+    """
+    All kinds of embedding, but only use static word embeddings finally.
+    """
     def __init__(self, vocab_size, embedding_size, dropout=0.1):
         super().__init__()
         self.token = TokenEmbedding(vocab_size=vocab_size, embed_size=embedding_size)
@@ -17,7 +20,9 @@ class AttractiveEmbedding(nn.Module):
         # return self.dropout(x)
 
 class PositionalEmbedding(nn.Module):
-
+    """
+    Positional embedding, but unused finally.
+    """
     def __init__(self, d_model, max_len=128):
         super().__init__()
 
@@ -38,9 +43,15 @@ class PositionalEmbedding(nn.Module):
         return self.pe[:, :x.size(1)]
 
 class TokenEmbedding(nn.Embedding):
+    """
+    Static word embedding.
+    """
     def __init__(self, vocab_size, embed_size=32):
         super().__init__(vocab_size, embed_size, padding_idx=1)
 
 class CategoryEmbedding(nn.Embedding):
+    """
+    Category embedding, but unused finally.
+    """
     def __init__(self, vocab_size, embed_size=32):
         super().__init__(vocab_size, embed_size, padding_idx=0)

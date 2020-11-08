@@ -22,7 +22,7 @@ if __name__ == '__main__':
     config_name = './config/' + postfix_name.split('/')[0] + '_' + postfix_name.split('/')[1]
     model_name = './model/' + postfix_name
     train_file = 'data/train.csv'
-    val_file = 'example/val.csv'
+    val_file = 'data/val.csv'
     test_file = 'data/test.csv'
 
     config = eval(open(config_name, 'r').readlines()[0])
