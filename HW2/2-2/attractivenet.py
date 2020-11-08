@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 from attractiveembedding import AttractiveEmbedding, CategoryEmbedding
 
 
@@ -31,9 +32,9 @@ class AttractiveNet(nn.Module):
 
         self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-        
+
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim'] * 4 + 2 * 2, 30),
+            nn.Linear(config['hidden_dim']*4+2*4, 30),
             nn.ReLU(),
             nn.Linear(30, 1)
         )
@@ -67,26 +68,23 @@ class AttractiveNet(nn.Module):
         x_tricnn = self.trigramcnn(x_cnn)
         x_bicnn = self.bigramcnn(x_cnn)
 
-        # (batch_size, hidden_size, seq_length) -> (seq_length, batch_size, hidden_size)
         x_tricnn = x_tricnn.transpose(1, 2)
         x_bicnn = x_bicnn.transpose(1, 2)
 
         # LSTM: (seq_length, batch_size, embedding_size)
 
-        output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)  
+        output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
         h_tri = h_tri.transpose(0, 1)
+        h_tri_avg_pool = torch.mean(h_tri, 2)
+        h_tri_max_pool, _ = torch.max(h_tri, 2)
         h_tri = h_tri.reshape(batch, -1)
-        h_tri_avg_pool = torch.mean(h_tri, 1)
-        h_tri_max_pool, _ = torch.max(h_tri, 1)
-        h_tri_avg_pool, h_tri_max_pool = h_tri_avg_pool.unsqueeze(1), h_tri_max_pool.unsqueeze(1)
 
         output_bi, (h_bi, c_bi) = self.encoder_bigram(x_bicnn)
         h_bi = h_bi.transpose(0, 1)
+        h_bi_avg_pool = torch.mean(h_bi, 2)
+        h_bi_max_pool, _ = torch.max(h_bi, 2)
         h_bi = h_bi.reshape(batch, -1)
-        h_bi_avg_pool = torch.mean(h_bi, 1)
-        h_bi_max_pool, _ = torch.max(h_tri, 1)
-        h_bi_avg_pool, h_bi_max_pool = h_bi_avg_pool.unsqueeze(1), h_bi_max_pool.unsqueeze(1)
-        
+
         x_category = torch.cat((h_tri, h_tri_avg_pool, h_tri_max_pool, 
                                 h_bi, h_bi_avg_pool, h_bi_max_pool), dim=1)
 
