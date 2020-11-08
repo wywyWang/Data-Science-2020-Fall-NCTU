@@ -16,17 +16,17 @@ class AttractiveNet(nn.Module):
 
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-1, padding=1),
-            nn.ReLU(),
+            nn.Hardswish(),
             nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
-            nn.ReLU(),
+            nn.Hardswish(),
             nn.Dropout(config['dropout'])
         )
         
         self.trigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU(),
+            nn.Hardswish(),
             nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU(),
+            nn.Hardswish(),
             nn.Dropout(config['dropout'])
         )
 
