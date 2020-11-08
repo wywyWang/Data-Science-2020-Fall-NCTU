@@ -17,11 +17,11 @@ def predict_attractive(sentence, category, phase):
 
 
 if __name__ == '__main__':
-    # CNN_LSTM_20201103-150358_0.4101.70
+    # CNN_LSTM_20201107-202605/0.374917.75
     postfix_name = sys.argv[1]
-    config_name = './config/' + postfix_name
+    config_name = './config/' + postfix_name.split('/')[0] + '_' + postfix_name.split('/')[1]
     model_name = './model/' + postfix_name
-    train_file = 'example/train.csv'
+    train_file = 'data/train.csv'
     val_file = 'example/val.csv'
     test_file = 'data/test.csv'
 
@@ -42,4 +42,4 @@ if __name__ == '__main__':
             predict_list.append(prediction.item())
             # predict_list.append(prediction.item())
     AttractiveData.df_test['Label'] = predict_list
-    AttractiveData.df_test[['ID', 'Label']].to_csv('./predict/' + postfix_name + '.csv', index=False)
+    AttractiveData.df_test[['ID', 'Label']].to_csv('./predict/' + postfix_name.split('/')[0] + '_' + postfix_name.split('/')[1] + '.csv', index=False)
