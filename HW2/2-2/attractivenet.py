@@ -24,9 +24,9 @@ class AttractiveNet(nn.Module):
         
         self.trigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU6(),
+            nn.ReLU(),
             nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1),
-            nn.ReLU6(),
+            nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
 
@@ -34,7 +34,7 @@ class AttractiveNet(nn.Module):
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim']*4+2*4, 30),
+            nn.Linear(config['hidden_dim']*4+2*2, 30),
             nn.ReLU(),
             nn.Linear(30, 1)
         )
@@ -85,8 +85,8 @@ class AttractiveNet(nn.Module):
         h_bi_max_pool, _ = torch.max(h_bi, 2)
         h_bi = h_bi.reshape(batch, -1)
 
-        x_category = torch.cat((h_tri, h_tri_avg_pool, h_tri_max_pool, 
-                                h_bi, h_bi_avg_pool, h_bi_max_pool), dim=1)
+        x_category = torch.cat((h_tri, h_tri_avg_pool, 
+                                h_bi, h_bi_avg_pool), dim=1)
 
         prediction = self.linear(x_category)
 
