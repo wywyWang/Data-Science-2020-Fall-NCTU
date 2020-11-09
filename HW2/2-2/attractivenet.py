@@ -28,17 +28,11 @@ class AttractiveNet(nn.Module):
         self.trigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1)
-            # nn.ReLU(),
-            # nn.Dropout(config['dropout'])
-        )
-        self.trigram_residual = nn.Conv1d(in_channels=config['embedding_dim'], out_channels=100, kernel_size=1)
-        self.trigram_output = nn.Sequential(
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
-
-
+        
         self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
@@ -75,18 +69,13 @@ class AttractiveNet(nn.Module):
         # (batch_size, seq_length, embedding_size) -> (batch_size, embedding_size, seq_length)
         x_cnn = x.transpose(1, 2)
         x_tricnn = self.trigramcnn(x_cnn)
-        x_tri_residual = self.trigram_residual(x_cnn)
-        x_tri_output = self.trigram_output(x_tricnn + x_tri_residual)
-        x_tri_output = x_tri_output.transpose(1, 2)
-
         x_bicnn = self.bigramcnn(x_cnn)
 
-
-        # x_tricnn = x_tricnn.transpose(1, 2)
+        x_tricnn = x_tricnn.transpose(1, 2)
         x_bicnn = x_bicnn.transpose(1, 2)
 
         # LSTM: (batch_size, seq_length, embedding_size)
-        output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tri_output)
+        output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
         h_tri = h_tri.transpose(0, 1)
         h_tri_avg_pool = torch.mean(h_tri, 2)
         h_tri_max_pool, _ = torch.max(h_tri, 2)

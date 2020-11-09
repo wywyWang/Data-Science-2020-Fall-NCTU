@@ -26,8 +26,6 @@ class AttractiveTrainer:
             {'params': self.model.encoder_bigram.parameters()}, 
             {'params': self.model.encoder_trigram.parameters()}, 
             {'params': self.model.bigramcnn.parameters()}, 
-            {'params': self.model.trigram_residual.parameters()}, 
-            {'params': self.model.trigram_output.parameters()}, 
             {'params': self.model.trigramcnn.parameters()},
             {'params': self.model.linear.parameters()}, 
             # {'params': self.model.category_embedding.parameters()}, 
