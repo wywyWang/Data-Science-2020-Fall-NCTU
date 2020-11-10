@@ -43,7 +43,7 @@ class AttractiveTrainer:
         for epoch in tqdm.tqdm(range(self.config['epochs']), desc='Epoch: '):
             self.train_loss, self.val_loss = self.iteration(epoch)
             if epoch > 30 and epoch < 200:
-                if epoch % 5 == 0:
+                if epoch % 2 == 0:
                     self.save(self.config['save_name'], self.config['timestr'], epoch, self.train_loss)
             else:
                 if epoch % 10 == 0 and epoch != 0:
