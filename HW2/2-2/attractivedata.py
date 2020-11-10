@@ -50,7 +50,7 @@ class AttractiveData:
         self.test_len = len(self.test_data)
         self.val_len = len(self.val_data)
 
-        self.TEXT.build_vocab(self.train_data, self.test_data, vectors=pretrained_file, unk_init=torch.Tensor.normal_)
+        self.TEXT.build_vocab(self.train_data, vectors=pretrained_file, unk_init=torch.Tensor.normal_)
         self.LABEL.build_vocab(self.train_data)
         self.CATEGORIES_LABEL.build_vocab(self.train_data)
         self.unk_idx = self.TEXT.vocab.stoi[self.TEXT.unk_token]
