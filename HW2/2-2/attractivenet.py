@@ -17,6 +17,14 @@ class AttractiveNet(nn.Module):
         self.embedding = AttractiveEmbedding(vocab_size=config['input_dim'], embedding_size=config['embedding_dim'])
         # self.category_embedding = CategoryEmbedding(vocab_size=config['category_dim'], embed_size=config['category_embedding_dim'])
 
+        self.unigramcnn = nn.Sequential(
+            nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-2, padding=0),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size']-2, padding=0),
+            nn.ReLU(),
+            nn.Dropout(config['dropout'])
+        )
+
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-1, padding=1),
             nn.ReLU(),
@@ -33,11 +41,12 @@ class AttractiveNet(nn.Module):
             nn.Dropout(config['dropout'])
         )
         
+        self.encoder_unigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
         self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
         self.linear = nn.Sequential(
-            nn.Linear(config['hidden_dim']*4+2*4, config['hidden_dim']),
+            nn.Linear(config['hidden_dim']*6+2*6, config['hidden_dim']),
             nn.ReLU(),
             nn.Linear(config['hidden_dim'], 1)
         )
@@ -70,9 +79,11 @@ class AttractiveNet(nn.Module):
         x_cnn = x.transpose(1, 2)
         x_tricnn = self.trigramcnn(x_cnn)
         x_bicnn = self.bigramcnn(x_cnn)
+        x_unicnn = self.unigramcnn(x_cnn)
 
         x_tricnn = x_tricnn.transpose(1, 2)
         x_bicnn = x_bicnn.transpose(1, 2)
+        x_unicnn = x_unicnn.transpose(1, 2)
 
         # LSTM: (batch_size, seq_length, embedding_size)
         output_tri, (h_tri, c_tri) = self.encoder_trigram(x_tricnn)
@@ -87,8 +98,15 @@ class AttractiveNet(nn.Module):
         h_bi_max_pool, _ = torch.max(h_bi, 2)
         h_bi = h_bi.reshape(batch, -1)
 
+        output_uni, (h_uni, c_uni) = self.encoder_unigram(x_unicnn)
+        h_uni = h_uni.transpose(0, 1)
+        h_uni_avg_pool = torch.mean(h_uni, 2)
+        h_uni_max_pool, _ = torch.max(h_uni, 2)
+        h_uni = h_uni.reshape(batch, -1)
+
         x_category = torch.cat((h_tri, h_tri_avg_pool, h_tri_max_pool, 
-                                h_bi, h_bi_avg_pool, h_bi_max_pool), dim=1)
+                                h_bi, h_bi_avg_pool, h_bi_max_pool, 
+                                h_uni, h_uni_avg_pool, h_uni_max_pool), dim=1)
 
         prediction = self.linear(x_category)
 
