@@ -19,26 +19,22 @@ class AttractiveNet(nn.Module):
 
         self.bigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size']-1, padding=1),
-            nn.BatchNorm1d(210),
-            nn.MaxPool2d(2),
             nn.ReLU(),
-            nn.Conv1d(in_channels=105, out_channels=55, kernel_size=config['kernel_size']-1, padding=1),
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size']-1, padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
 
         self.trigramcnn = nn.Sequential(
             nn.Conv1d(in_channels=config['embedding_dim'], out_channels=210, kernel_size=config['kernel_size'], padding=1),
-            nn.BatchNorm1d(210),
-            nn.MaxPool2d(2),
             nn.ReLU(),
-            nn.Conv1d(in_channels=105, out_channels=55, kernel_size=config['kernel_size'], padding=1),
+            nn.Conv1d(in_channels=210, out_channels=100, kernel_size=config['kernel_size'], padding=1),
             nn.ReLU(),
             nn.Dropout(config['dropout'])
         )
         
-        self.encoder_bigram = nn.LSTM(input_size=55, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
-        self.encoder_trigram = nn.LSTM(input_size=55, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        self.encoder_bigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
+        self.encoder_trigram = nn.LSTM(input_size=100, hidden_size=config['hidden_dim'], num_layers=config['num_layers'], dropout=config['dropout'], bidirectional=True, batch_first=True)
 
         self.linear = nn.Sequential(
             nn.Linear(config['hidden_dim']*4+2*4, config['hidden_dim']),
