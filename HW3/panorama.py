@@ -410,7 +410,7 @@ class Panorama:
             descriptors.append(descriptor_vector)
         return (process_idx, np.array(descriptors, dtype='float32'))
 
-    def detectAndCompute(self, image, sigma=1.6, num_intervals=3, image_border_width=5):
+    def detectAndCompute(self, image, sigma=1.6, num_intervals=5, image_border_width=5):
         image = image.astype('float32')
         image = cv2.resize(image, (0, 0), fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
         base_image = cv2.GaussianBlur(image, (0, 0), sigmaX=1, sigmaY=1)
