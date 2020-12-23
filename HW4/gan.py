@@ -1,6 +1,7 @@
 import argparse
 import os
 import math
+import time
 
 import cv2
 import glob
@@ -112,6 +113,9 @@ def train(opt):
     os.makedirs("result/models", exist_ok=True)
     cuda = True if torch.cuda.is_available() else False
 
+    # # Open log file
+    # log_file = open('')
+
     # Loss function
     adversarial_loss = torch.nn.BCELoss()
 
@@ -174,7 +178,7 @@ def train(opt):
     #  Training
     # ----------
 
-    for epoch in range(opt.n_epochs):
+    for epoch in tqdm(range(opt.n_epochs)):
         total_d_loss, total_g_loss = 0, 0
         for i, imgs in enumerate(dataloader):
 
@@ -239,8 +243,8 @@ def train(opt):
                            "result/models/%d/discriminator.pt" % batches_done)
                 torch.save(generator.state_dict(),
                            "result/models/%d/generator.pt" % batches_done)
-    print("[Epoch %d/%d] [D loss: %f] [G loss: %f]" %
-            (epoch, opt.n_epochs, total_d_loss / len(dataloader), total_g_loss / len(dataloader)))
+        print("[Epoch %d/%d] [D loss: %f] [G loss: %f]" %
+                (epoch, opt.n_epochs, total_d_loss / len(dataloader), total_g_loss / len(dataloader)))
 
 
 def inference(opt):
