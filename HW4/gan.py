@@ -327,7 +327,7 @@ if __name__ == '__main__':
                         help="number of epochs of training")
     parser.add_argument("--batch_size",
                         type=int,
-                        default=128,
+                        default=32,
                         help="size of the batches")
     parser.add_argument("--lr",
                         type=float,
