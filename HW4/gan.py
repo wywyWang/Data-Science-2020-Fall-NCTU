@@ -25,9 +25,7 @@ import torch
 
 from data_loader import prepare_loader
 
-# from cyclegan import *
-# from datasets import *
-# from utils import *
+torch.manual_seed(42)
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
@@ -167,7 +165,6 @@ def train(opt):
     for epoch in tqdm(range(opt.n_epochs)):
         total_d_loss, total_g_loss = 0, 0
         for i, imgs in enumerate(dataloader):
-
             # Adversarial ground truths
             valid = Variable(Tensor(imgs.shape[0], 1).fill_(1.0), requires_grad=False)
             fake = Variable(Tensor(imgs.shape[0], 1).fill_(0.0), requires_grad=False)
@@ -188,7 +185,6 @@ def train(opt):
             gen_imgs = generator(z)
 
             # Loss measures generator's ability to fool the discriminator
-            # [TODO] generator loss use adversarial_loss
             g_loss = adversarial_loss(discriminator(gen_imgs), valid)
 
             g_loss.backward()
@@ -201,9 +197,9 @@ def train(opt):
             optimizer_D.zero_grad()
 
             # Measure discriminator's ability to classify real from generated samples
-            # [TODO] discriminator loss use adversarial_loss
+
             real_loss = adversarial_loss(discriminator(real_imgs), valid)
-            # [TODO] discriminator loss use adversarial_loss
+
             fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
 
             d_loss = (real_loss + fake_loss) / 2
@@ -268,13 +264,13 @@ def process_data(opt):
 
     # Config dataloader
     root_images = pjoin(opt.data_path, 'images/') #'data/images/'
-    root_annots = pjoin(opt.data_path, 'annotations/')#'data/annotations/'
+    root_annots = pjoin(opt.data_path, 'annotations/') #'data/annotations/'
     dataloader = prepare_loader(root_images, root_annots, opt.batch_size)
 
     # Save cropped images
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
     image_count = 0
-    for imgs  in tqdm(dataloader):
+    for imgs in tqdm(dataloader):
         real_imgs = Variable(imgs.type(Tensor))
         for i in range(0, len(real_imgs)):
             save_image(real_imgs.data[i],
@@ -342,7 +338,7 @@ if __name__ == '__main__':
                         help="interval between image sampling")
     parser.add_argument("--inference_num",
                         type=int,
-                        default=1000,
+                        default=10000,
                         help="number of generated images for inference")
     parser.add_argument("--n_cpu", 
                         type=int, 
