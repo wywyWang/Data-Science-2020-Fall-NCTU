@@ -252,14 +252,11 @@ def inference(opt):
 
     # Inference
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
-    z = Variable(
-        Tensor(np.random.normal(0, 1, (opt.inference_num, opt.latent_dim))))
-    gen_imgs = generator(z)
 
-    for i in tqdm(range(0, opt.inference_num)):
-        save_image(gen_imgs.data[i],
-                   "result/images_inference/%d.png" % i,
-                   normalize=True)
+    for i in tqdm(range(opt.inference_num)):
+        z = Variable(Tensor(np.random.normal(0, 1, (1, opt.latent_dim))))
+        gen_imgs = generator(z)
+        save_image(gen_imgs.data, "result/images_inference/%d.png" % i, normalize=True)
 
 
 def process_data(opt):
@@ -313,7 +310,7 @@ if __name__ == '__main__':
                         help="number of epochs of training")
     parser.add_argument("--batch_size",
                         type=int,
-                        default=64,
+                        default=32,
                         help="size of the batches")
     parser.add_argument("--lr",
                         type=float,
@@ -345,7 +342,7 @@ if __name__ == '__main__':
                         help="interval between image sampling")
     parser.add_argument("--inference_num",
                         type=int,
-                        default=100,
+                        default=1000,
                         help="number of generated images for inference")
     parser.add_argument("--n_cpu", 
                         type=int, 
