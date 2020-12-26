@@ -26,7 +26,9 @@ import torch
 from data_loader import prepare_loader
 import gan_model
 
-torch.manual_seed(42)
+SEED = 42
+torch.manual_seed(SEED)
+np.random.seed(SEED)
 
 def train(opt):
     os.makedirs("result/images_train", exist_ok=True)
@@ -285,7 +287,7 @@ if __name__ == '__main__':
                         help="number of generated images for inference")
     parser.add_argument("--n_cpu", 
                         type=int, 
-                        default=8, 
+                        default=1, 
                         help="number of cpu threads to use during batch generation")
 
     opt = parser.parse_args()

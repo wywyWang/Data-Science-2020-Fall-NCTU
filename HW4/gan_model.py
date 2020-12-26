@@ -13,25 +13,25 @@ torch.manual_seed(42)
 
 def init_weight(m):
     classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find("BatchNorm2d") != -1:
-        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
-        torch.nn.init.constant_(m.bias.data, 0.0)
+    # if classname.find("Conv") != -1:
+    #     torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+    # elif classname.find("BatchNorm2d") != -1:
+    #     torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+    #     torch.nn.init.constant_(m.bias.data, 0.0)
 
-    # if classname.find('Conv') != -1:
-    #     nn.init.orthogonal_(m.weight, gain=1)
-    #     if m.bias is not None:
-    #         m.bias.data.zero_()
+    if classname.find('Conv') != -1:
+        nn.init.orthogonal_(m.weight, gain=1)
+        if m.bias is not None:
+            m.bias.data.zero_()
             
-    # elif classname.find('Batch') != -1:
-    #     m.weight.data.normal_(1,0.02)
-    #     m.bias.data.zero_()
+    elif classname.find('Batch') != -1:
+        m.weight.data.normal_(1,0.02)
+        m.bias.data.zero_()
     
-    # elif classname.find('Linear') != -1:
-    #     nn.init.orthogonal_(m.weight, gain=1)
-    #     if m.bias is not None:
-    #         m.bias.data.zero_()
+    elif classname.find('Linear') != -1:
+        nn.init.orthogonal_(m.weight, gain=1)
+        if m.bias is not None:
+            m.bias.data.zero_()
     
     # elif classname.find('Embedding') != -1:
     #     nn.init.orthogonal_(m.weight, gain=1)
