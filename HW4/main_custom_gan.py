@@ -1,9 +1,5 @@
 import argparse
 import os
-import math
-import time
-
-import cv2
 import glob
 import imageio
 import numpy as np
@@ -11,17 +7,15 @@ import albumentations as A
 from albumentations.pytorch import ToTensor
 from tqdm import tqdm
 from os.path import join as pjoin
-
-import torchvision.transforms as transforms
 from torchvision.utils import save_image
-
 from torch.utils.data import DataLoader
-from torchvision import datasets
 from torch.autograd import Variable
 
-from torch import nn, optim
-import torch.nn.functional as F
+# from torch import nn, optim
 import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 
 from scipy.stats import truncnorm
 
@@ -33,6 +27,7 @@ torch.manual_seed(SEED)
 
 # For fast training
 torch.backends.cudnn.benchmark = True
+
 
 def train(opt):
     os.makedirs("result/images_train", exist_ok=True)
@@ -87,7 +82,6 @@ def train(opt):
                                                                         T_0=opt.n_epochs//200, eta_min=0.00005)
     lr_schedulerD = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizerD,
                                                                         T_0=opt.n_epochs//200, eta_min=0.00005)
-    # fixed_noise = torch.randn(25, opt.latent_dim, 1, 1, device=device)
 
     real_label = 0.7
     fake_label = 0.0

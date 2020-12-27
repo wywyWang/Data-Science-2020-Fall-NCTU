@@ -1,4 +1,4 @@
-python gan.py --mode=process_data --data_path=$1
-python gan.py --mode=train --n_epochs=200
-python gan.py --mode=inference --model_path=result/models/final/
+python main_custom_gan.py --mode=process_data --data_path=$1
+python main_custom_gan.py --mode=train
+python main_custom_gan.py --mode=inference
 
