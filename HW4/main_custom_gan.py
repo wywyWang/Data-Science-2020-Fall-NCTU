@@ -58,7 +58,7 @@ def train(opt):
             self.images = np.array(self.images)
             self.transform = A.Compose(
                 [A.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                #  A.augmentations.transforms.ColorJitter(brightness=0.2, contrast=0.9, saturation=0.3, hue=0.01, p=0.2),
+                 A.augmentations.transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.01, p=0.2),
                  ToTensor()])
 
         def __len__(self):

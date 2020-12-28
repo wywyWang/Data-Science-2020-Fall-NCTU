@@ -9,6 +9,7 @@ from torch.nn.utils import spectral_norm
 import os
 from tqdm import tqdm
 
+
 class PixelwiseNorm(nn.Module):
     def __init__(self):
         super(PixelwiseNorm, self).__init__()
@@ -23,6 +24,7 @@ class PixelwiseNorm(nn.Module):
         y = x.pow(2.).mean(dim=1, keepdim=True).add(alpha).sqrt()  # [N1HW]
         y = x / y  # normalize the input x volume
         return y
+
 
 class MinibatchStdDev(nn.Module):
     """
