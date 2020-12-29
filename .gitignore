@@ -3,3 +3,4 @@ HW1/crawling/*
 !requirements.txt
 HW1/hw1_1_scripts/*
 __pycache__/
+*.zip
