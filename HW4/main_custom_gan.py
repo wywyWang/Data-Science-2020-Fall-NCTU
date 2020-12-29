@@ -11,7 +11,6 @@ from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
-# from torch import nn, optim
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -46,7 +45,6 @@ def train(opt):
         def __init__(self, path):
             super().__init__()
 
-            #self.images = None
             self.images = []
 
             # Read all png files
@@ -59,7 +57,6 @@ def train(opt):
             self.transform = A.Compose(
                 [A.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                  A.augmentations.transforms.HorizontalFlip(0.3),
-                #  A.augmentations.transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.01, p=0.2),
                  ToTensor()])
 
         def __len__(self):
@@ -79,10 +76,8 @@ def train(opt):
     # Optimizers
     optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
     optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
-    lr_schedulerG = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizerG,
-                                                                        T_0=opt.n_epochs//200, eta_min=0.00005)
-    lr_schedulerD = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizerD,
-                                                                        T_0=opt.n_epochs//200, eta_min=0.00005)
+    lr_schedulerG = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizerG, T_0=opt.n_epochs//200, eta_min=0.00005)
+    lr_schedulerD = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizerD, T_0=opt.n_epochs//200, eta_min=0.00005)
 
     real_label = 0.7
     fake_label = 0.0
