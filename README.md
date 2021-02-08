@@ -35,3 +35,11 @@
 - Evaluation metric
 
   F1 score
+## HW2 Headline Attractiveness Predictor
+### 2-1 Attractiveness Annotation
+Given a headline, annotate the corresponding attractive score from 1 to 5.
+### 2-2 Attractiveness Prediction on [Kaggle](https://www.kaggle.com/c/datascience2020hw2)
+Predict the attractiveness of a headline based on the content or the category.
+- Evaluation metric
+  
+  mean square error (MSE)
