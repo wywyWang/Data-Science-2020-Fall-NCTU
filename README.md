@@ -1,7 +1,7 @@
 # Data-Science-2020-Fall-NCTU
 
 ## HW1
-### HW1-1 Crawl [PTT Beauty](https://www.ptt.cc/bbs/Beauty/index.html)
+### 1-1 Crawl [PTT Beauty](https://www.ptt.cc/bbs/Beauty/index.html)
 - Implemented functions
   - `crawl`
     
@@ -27,3 +27,11 @@
     ```=python
     python {student_id}.py popular {keyword} {start_date} {end_date}
     ```
+### 1-2 Popularity Classification
+- Input
+  - An image from crawled data
+- Output
+  - Whether the image is in the popular article
+- Evaluation metric
+
+  F1 score
