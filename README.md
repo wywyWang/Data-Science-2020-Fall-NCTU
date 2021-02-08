@@ -40,6 +40,10 @@
 Given a headline, annotate the corresponding attractive score from 1 to 5.
 ### 2-2 Attractiveness Prediction on [Kaggle](https://www.kaggle.com/c/datascience2020hw2)
 Predict the attractiveness of a headline based on the content or the category.
-- Evaluation metric
-  
-  mean square error (MSE)
+Evaluation metric: mean square error (MSE)
+## HW3 Panorama
+Implement feature detection, feature matching, image matching, and blending.
+Evaluation metric: Use pretrained VGG16 to get feature vector from groundtruth and generated images then compute cosine similarity.
+## HW4 GAN
+Train a GAN from scratch to generate dog images from Gaussian noise
+Evaluation metric: Frechet inception distance (FID)
